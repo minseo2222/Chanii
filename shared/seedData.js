@@ -1,0 +1,428 @@
+export const inventorySeed = [
+  {
+    id: '1',
+    name: '소고기',
+    icon: 'beef',
+    quantity: '300g',
+    location: 'refrigerated',
+    processingState: '원물',
+    expiryDate: '2026-03-21',
+    addedDate: '2026-03-18'
+  },
+  {
+    id: '2',
+    name: '김치',
+    icon: 'salad',
+    quantity: '500g',
+    location: 'refrigerated',
+    processingState: '소분',
+    expiryDate: '2026-03-29',
+    addedDate: '2026-03-10'
+  },
+  {
+    id: '3',
+    name: '달걀',
+    icon: 'egg',
+    quantity: '10개',
+    location: 'refrigerated',
+    processingState: '원물',
+    expiryDate: '2026-03-23',
+    addedDate: '2026-03-15'
+  },
+  {
+    id: '4',
+    name: '냉동만두',
+    icon: 'cookie',
+    quantity: '1봉지',
+    location: 'frozen',
+    processingState: '완제품',
+    expiryDate: '2026-08-01',
+    addedDate: '2026-02-20'
+  },
+  {
+    id: '5',
+    name: '당근',
+    icon: 'carrot',
+    quantity: '3개',
+    location: 'refrigerated',
+    processingState: '원물',
+    expiryDate: '2026-03-24',
+    addedDate: '2026-03-16'
+  },
+  {
+    id: '6',
+    name: '양파',
+    icon: 'apple',
+    quantity: '5개',
+    location: 'room',
+    processingState: '원물',
+    expiryDate: '2026-04-05',
+    addedDate: '2026-03-12'
+  },
+  {
+    id: '7',
+    name: '우유',
+    icon: 'milk',
+    quantity: '1L',
+    location: 'refrigerated',
+    processingState: '원물',
+    expiryDate: '2026-03-20',
+    addedDate: '2026-03-17'
+  },
+  {
+    id: '8',
+    name: '참치캔',
+    icon: 'fish',
+    quantity: '3개',
+    location: 'room',
+    processingState: '완제품',
+    expiryDate: '2027-01-01',
+    addedDate: '2026-01-15'
+  },
+  {
+    id: '9',
+    name: '두부',
+    icon: 'square',
+    quantity: '1모',
+    location: 'refrigerated',
+    processingState: '원물',
+    expiryDate: '2026-03-20',
+    addedDate: '2026-03-18'
+  },
+  {
+    id: '10',
+    name: '냉동 소고기',
+    icon: 'beef',
+    quantity: '500g',
+    location: 'frozen',
+    processingState: '소분',
+    expiryDate: '2026-06-01',
+    addedDate: '2026-02-18'
+  }
+];
+
+export const recipeSeed = [
+  {
+    id: 1,
+    name: '김치볶음밥',
+    title: '김치볶음밥',
+    category: '한식',
+    image: 'https://images.unsplash.com/photo-1603133872878-684f208fb84b?w=500&h=400&fit=crop',
+    cookingTime: 15,
+    cooking_time: 15,
+    difficulty: 2,
+    calories: 450,
+    rating: 4.8,
+    ratingCount: 234,
+    description: '자취생이 빠르게 만들기 좋은 든든한 한 그릇 메뉴예요.',
+    ingredients: [
+      { name: '밥', amount: '2공기', required: true },
+      { name: '김치', amount: '150g', required: true },
+      { name: '식용유', amount: '2큰술', required: true },
+      { name: '양파', amount: '1/2개', required: false },
+      { name: '달걀', amount: '1개', required: false }
+    ],
+    steps: [
+      { text: '김치와 양파를 잘게 썰어 준비해요.', tip: '김치는 국물을 살짝 짜면 밥이 질어지지 않아요.' },
+      { text: '팬에 기름을 두르고 양파와 김치를 먼저 볶아요.', tip: '김치 향이 올라올 때까지 볶아야 맛이 진해져요.' },
+      { text: '밥을 넣고 고르게 섞으며 볶아요.', tip: '주걱으로 눌러가며 볶으면 고슬고슬해져요.' },
+      { text: '원하면 달걀 프라이를 올려 마무리해요.', tip: '참기름이나 김가루를 더해도 좋아요.' }
+    ],
+    tools: ['프라이팬'],
+    xpReward: 15,
+    coinReward: 30
+  },
+  {
+    id: 2,
+    name: '된장찌개',
+    title: '된장찌개',
+    category: '한식',
+    image: 'https://images.unsplash.com/photo-1590301157890-4810ed352733?w=500&h=400&fit=crop',
+    cookingTime: 25,
+    cooking_time: 25,
+    difficulty: 3,
+    calories: 280,
+    rating: 4.9,
+    ratingCount: 456,
+    description: '집밥 느낌이 살아 있는 기본 된장찌개예요.',
+    ingredients: [
+      { name: '된장', amount: '2큰술', required: true },
+      { name: '두부', amount: '1/2모', required: true },
+      { name: '양파', amount: '1/2개', required: true },
+      { name: '감자', amount: '1개', required: false },
+      { name: '애호박', amount: '1/4개', required: false }
+    ],
+    steps: [
+      { text: '냄비에 물을 붓고 된장을 풀어요.', tip: '멸치 육수를 쓰면 더 깊은 맛이 나요.' },
+      { text: '단단한 채소부터 넣고 끓여요.', tip: '감자를 먼저 넣으면 익는 시간이 맞아요.' },
+      { text: '두부와 애호박을 넣고 한 번 더 끓여요.', tip: '두부는 너무 오래 끓이면 부서질 수 있어요.' },
+      { text: '간을 보고 필요하면 다진 마늘을 조금 넣어요.', tip: '마지막에 청양고추를 넣으면 칼칼해져요.' }
+    ],
+    tools: ['냄비'],
+    xpReward: 25,
+    coinReward: 50
+  },
+  {
+    id: 3,
+    name: '알리오 올리오',
+    title: '알리오 올리오',
+    category: '양식',
+    image: 'https://images.unsplash.com/photo-1621996346565-e3dbc646d9a9?w=500&h=400&fit=crop',
+    cookingTime: 20,
+    cooking_time: 20,
+    difficulty: 2,
+    calories: 520,
+    rating: 4.7,
+    ratingCount: 189,
+    description: '마늘 향이 살아 있는 깔끔한 오일 파스타예요.',
+    ingredients: [
+      { name: '스파게티면', amount: '200g', required: true },
+      { name: '마늘', amount: '5쪽', required: true },
+      { name: '올리브오일', amount: '5큰술', required: true },
+      { name: '페퍼론치노', amount: '3개', required: false },
+      { name: '파슬리', amount: '약간', required: false }
+    ],
+    steps: [
+      { text: '면을 소금 넣은 물에 삶아요.', tip: '포장 시간보다 1분 덜 삶으면 식감이 좋아요.' },
+      { text: '팬에 오일과 마늘을 넣고 약불에서 향을 내요.', tip: '마늘이 타지 않게 천천히 익혀요.' },
+      { text: '삶은 면과 면수를 넣고 볶아요.', tip: '면수를 넣으면 소스가 잘 엉겨요.' },
+      { text: '파슬리나 치즈를 곁들여 마무리해요.', tip: '매운맛을 원하면 페퍼론치노를 추가하세요.' }
+    ],
+    tools: ['냄비', '프라이팬'],
+    xpReward: 20,
+    coinReward: 40
+  },
+  {
+    id: 4,
+    name: '토마토 달걀볶음',
+    title: '토마토 달걀볶음',
+    category: '중식',
+    image: 'https://images.unsplash.com/photo-1512058564366-18510be2db19?w=500&h=400&fit=crop',
+    cookingTime: 10,
+    cooking_time: 10,
+    difficulty: 1,
+    calories: 180,
+    rating: 4.6,
+    ratingCount: 312,
+    description: '토마토와 달걀만 있어도 만들 수 있는 초간단 볶음이에요.',
+    ingredients: [
+      { name: '토마토', amount: '2개', required: true },
+      { name: '달걀', amount: '3개', required: true },
+      { name: '소금', amount: '약간', required: true },
+      { name: '식용유', amount: '2큰술', required: true },
+      { name: '설탕', amount: '1작은술', required: false }
+    ],
+    steps: [
+      { text: '달걀을 풀어 스크램블 상태로 반쯤 익혀 덜어내요.', tip: '완전히 익히지 않아야 더 부드러워요.' },
+      { text: '토마토를 볶아 수분을 살짝 날려요.', tip: '설탕을 조금 넣으면 산미가 부드러워져요.' },
+      { text: '달걀을 다시 넣고 가볍게 섞어요.', tip: '한 번에 오래 볶지 말고 빠르게 마무리해요.' }
+    ],
+    tools: ['프라이팬'],
+    xpReward: 10,
+    coinReward: 20
+  },
+  {
+    id: 5,
+    name: '참치 샐러드',
+    title: '참치 샐러드',
+    category: '샐러드',
+    image: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500&h=400&fit=crop',
+    cookingTime: 15,
+    cooking_time: 15,
+    difficulty: 1,
+    calories: 320,
+    rating: 4.5,
+    ratingCount: 278,
+    description: '가볍게 먹고 싶을 때 좋은 단백질 샐러드예요.',
+    ingredients: [
+      { name: '참치캔', amount: '1개', required: true },
+      { name: '양상추', amount: '한 줌', required: true },
+      { name: '오이', amount: '1/2개', required: false },
+      { name: '방울토마토', amount: '5개', required: false },
+      { name: '드레싱', amount: '적당량', required: true }
+    ],
+    steps: [
+      { text: '채소를 씻어 먹기 좋게 손질해요.', tip: '물기를 잘 제거해야 드레싱이 묽어지지 않아요.' },
+      { text: '참치 기름을 빼고 채소 위에 올려요.', tip: '기름 참치라면 더 산뜻하게 먹을 수 있어요.' },
+      { text: '드레싱을 뿌려 가볍게 버무려요.', tip: '먹기 직전에 섞으면 식감이 좋아요.' }
+    ],
+    tools: ['볼'],
+    xpReward: 15,
+    coinReward: 30
+  },
+  {
+    id: 6,
+    name: '라면',
+    title: '라면',
+    category: '간편식',
+    image: 'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=500&h=400&fit=crop',
+    cookingTime: 5,
+    cooking_time: 5,
+    difficulty: 1,
+    calories: 510,
+    rating: 4.9,
+    ratingCount: 892,
+    description: '언제 먹어도 익숙하고 맛있는 한 끼예요.',
+    ingredients: [
+      { name: '라면', amount: '1봉지', required: true },
+      { name: '물', amount: '550ml', required: true },
+      { name: '달걀', amount: '1개', required: false },
+      { name: '김치', amount: '약간', required: false }
+    ],
+    steps: [
+      { text: '냄비에 물을 넣고 끓여요.', tip: '포장지 물 양을 기준으로 맞추면 실패가 적어요.' },
+      { text: '면과 스프를 넣고 끓여요.', tip: '취향에 따라 스프 양을 조절하세요.' },
+      { text: '원하면 달걀이나 김치를 넣고 마무리해요.', tip: '달걀은 마지막 1분 전에 넣으면 좋아요.' }
+    ],
+    tools: ['냄비'],
+    xpReward: 5,
+    coinReward: 10
+  }
+];
+
+export const communityShortsSeed = [
+  {
+    id: 1,
+    userId: 'user001',
+    username: '요리정석',
+    userAvatar: '정',
+    thumbnail: 'https://images.unsplash.com/photo-1603133872878-684f208fb84b?w=400&h=700&fit=crop',
+    title: '5분 만에 만드는 김치볶음밥',
+    likes: 1234,
+    comments: 89,
+    shares: 45,
+    ingredients: [
+      { name: '밥', amount: '2공기' },
+      { name: '김치', amount: '150g' },
+      { name: '식용유', amount: '2큰술' },
+      { name: '양파', amount: '1/2개' }
+    ],
+    isLiked: false
+  },
+  {
+    id: 2,
+    userId: 'user002',
+    username: '집밥요정',
+    userAvatar: '집',
+    thumbnail: 'https://images.unsplash.com/photo-1590301157890-4810ed352733?w=400&h=700&fit=crop',
+    title: '집에 있는 재료로 된장찌개 끓이기',
+    likes: 2156,
+    comments: 134,
+    shares: 78,
+    ingredients: [
+      { name: '된장', amount: '2큰술' },
+      { name: '두부', amount: '1/2모' },
+      { name: '양파', amount: '1/2개' },
+      { name: '감자', amount: '1개' }
+    ],
+    isLiked: false
+  },
+  {
+    id: 3,
+    userId: 'user003',
+    username: '파스타마스터',
+    userAvatar: '파',
+    thumbnail: 'https://images.unsplash.com/photo-1621996346565-e3dbc646d9a9?w=400&h=700&fit=crop',
+    title: '레스토랑 느낌 나는 알리오 올리오',
+    likes: 3421,
+    comments: 267,
+    shares: 156,
+    ingredients: [
+      { name: '스파게티면', amount: '200g' },
+      { name: '마늘', amount: '5쪽' },
+      { name: '올리브오일', amount: '5큰술' },
+      { name: '파슬리', amount: '약간' }
+    ],
+    isLiked: false
+  }
+];
+
+export const communityPostsSeed = [
+  {
+    id: 101,
+    userId: 'user005',
+    username: '베이킹러버',
+    userAvatar: '베',
+    thumbnail: 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=400&h=300&fit=crop',
+    title: '초간단 머핀 만들기',
+    likes: 4521,
+    comments: 312,
+    category: '베이킹',
+    timeAgo: '1시간 전',
+    description: '오븐 없이도 가능한 쉬운 머핀 레시피를 정리했어요.'
+  },
+  {
+    id: 102,
+    userId: 'user006',
+    username: '아침밥천재',
+    userAvatar: '아',
+    thumbnail: 'https://images.unsplash.com/photo-1525351484163-7529414344d8?w=400&h=300&fit=crop',
+    title: '영양 만점 아침 샌드위치',
+    likes: 3214,
+    comments: 189,
+    category: '양식',
+    timeAgo: '3시간 전',
+    description: '냉장고 남은 재료로 만드는 든든한 샌드위치예요.'
+  },
+  {
+    id: 103,
+    userId: 'user007',
+    username: '일식러버',
+    userAvatar: '일',
+    thumbnail: 'https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=400&h=300&fit=crop',
+    title: '집에서 만드는 참치덮밥',
+    likes: 5678,
+    comments: 421,
+    category: '일식',
+    timeAgo: '5시간 전',
+    description: '참치캔만 있으면 가능한 간단한 덮밥 레시피예요.'
+  },
+  {
+    id: 201,
+    userId: 'newbie001',
+    username: '요리초보',
+    userAvatar: '초',
+    thumbnail: null,
+    title: '계란프라이 처음 해봤어요!',
+    likes: 5,
+    comments: 2,
+    category: '한식',
+    description: '반숙으로 하려다가 완숙이 되었지만 그래도 맛있었어요.',
+    timeAgo: '방금 전'
+  },
+  {
+    id: 202,
+    userId: 'student123',
+    username: '자취생',
+    userAvatar: '자',
+    thumbnail: 'https://images.unsplash.com/photo-1585238342024-78d387f4a707?w=400&h=300&fit=crop',
+    title: '편의점 재료 조합 추천',
+    likes: 45,
+    comments: 12,
+    category: '간편식',
+    description: '마크정식 느낌으로 섞어 먹었는데 생각보다 괜찮았어요.',
+    timeAgo: '10분 전'
+  }
+];
+
+export const recipeCategories = ['한식', '양식', '중식', '샐러드', '간편식'];
+export const cookingTools = ['냄비', '프라이팬', '전자레인지', '에어프라이어', '볼'];
+
+export const calculateFreshness = (expiryDate, now = new Date()) => {
+  const today = new Date(now);
+  today.setHours(0, 0, 0, 0);
+  const expiry = new Date(expiryDate);
+  expiry.setHours(0, 0, 0, 0);
+  const daysRemaining = Math.ceil((expiry - today) / (1000 * 60 * 60 * 24));
+
+  if (daysRemaining < 0) {
+    return { status: 'expired', color: 'freshness-danger', days: daysRemaining, percentage: 100 };
+  }
+  if (daysRemaining <= 3) {
+    return { status: 'danger', color: 'freshness-danger', days: daysRemaining, percentage: 20 };
+  }
+  if (daysRemaining <= 7) {
+    return { status: 'warning', color: 'freshness-warning', days: daysRemaining, percentage: 55 };
+  }
+  return { status: 'good', color: 'freshness-good', days: daysRemaining, percentage: Math.min((daysRemaining / 30) * 100, 100) };
+};

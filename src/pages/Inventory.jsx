@@ -1,60 +1,94 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Package } from 'lucide-react';
+import { Plus, Package, Sparkles } from 'lucide-react';
+import { useLocation } from 'react-router-dom';
 import IngredientCard from '../components/IngredientCard';
 import AddIngredientForm from '../components/AddIngredientForm';
 import IngredientDetailModal from '../components/IngredientDetailModal';
 
-const Inventory = ({ inventory, onAddIngredient, onUpdateIngredient, onDeleteIngredient, onToggleFreeze, onNavigate }) => {
+const tabs = [
+    { id: 'refrigerated', label: '냉장', icon: '🧊', emptyText: '냉장 칸이 비어 있어요.' },
+    { id: 'frozen', label: '냉동', icon: '❄️', emptyText: '냉동 칸이 비어 있어요.' },
+    { id: 'room', label: '실온', icon: '🥫', emptyText: '실온 보관 재료가 없어요.' }
+];
+
+const Inventory = ({ inventory, onAddIngredient, onUpdateIngredient, onDeleteIngredient, onToggleFreeze }) => {
+    const location = useLocation();
     const [activeTab, setActiveTab] = useState('refrigerated');
     const [showAddForm, setShowAddForm] = useState(false);
     const [selectedIngredient, setSelectedIngredient] = useState(null);
 
-    const tabs = [
-        { id: 'refrigerated', label: '냉장', icon: '🧊' },
-        { id: 'frozen', label: '냉동', icon: '❄️' },
-        { id: 'room', label: '실온', icon: '🌡️' }
-    ];
+    useEffect(() => {
+        const requestedTab = location.state?.initialTab;
+        if (requestedTab && tabs.some((tab) => tab.id === requestedTab)) {
+            setActiveTab(requestedTab);
+        }
+    }, [location.state]);
 
-    const filteredItems = inventory.filter(item => item.location === activeTab);
+    const filteredItems = useMemo(
+        () => inventory.filter((item) => item.location === activeTab),
+        [inventory, activeTab]
+    );
+
+    const activeTabInfo = tabs.find((tab) => tab.id === activeTab);
 
     return (
-        <div className="min-h-screen p-6 pb-20">
-            <div className="max-w-6xl mx-auto">
-                {/* Header */}
-                <div className="flex items-center justify-between mb-6">
-                    <h1 className="text-4xl font-bold bg-gradient-to-r from-pastel-purple to-pastel-blue bg-clip-text text-transparent">
-                        인벤토리
-                    </h1>
+        <div className="min-h-screen p-6 pb-24">
+            <div className="max-w-6xl mx-auto space-y-6">
+                <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+                    <div>
+                        <p className="text-sm font-semibold text-pastel-purple mb-2">찬이 인벤토리</p>
+                        <h1 className="text-4xl font-bold bg-gradient-to-r from-pastel-purple to-pastel-blue bg-clip-text text-transparent">
+                            인벤토리
+                        </h1>
+                        <p className="text-gray-500 mt-2">
+                            보관 위치별로 재료를 관리하고, 눌러서 바로 상태를 수정할 수 있어요.
+                        </p>
+                    </div>
 
                     <motion.button
                         onClick={() => setShowAddForm(true)}
-                        className="btn-primary flex items-center gap-2"
+                        className="btn-primary flex items-center gap-2 self-start md:self-auto"
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                     >
                         <Plus size={20} />
-                        추가
+                        재료 추가
                     </motion.button>
                 </div>
 
-                {/* Tabs */}
-                <div className="flex gap-4 mb-6 bg-white/30 backdrop-blur-sm rounded-full p-2">
-                    {tabs.map(tab => (
-                        <motion.button
-                            key={tab.id}
-                            onClick={() => setActiveTab(tab.id)}
-                            className={`flex-1 tab ${activeTab === tab.id ? 'tab-active' : 'tab-inactive'}`}
-                            whileHover={{ scale: 1.02 }}
-                            whileTap={{ scale: 0.98 }}
-                        >
-                            <span className="mr-2">{tab.icon}</span>
-                            {tab.label}
-                        </motion.button>
-                    ))}
+                <div className="grid grid-cols-1 lg:grid-cols-[1.2fr_0.8fr] gap-4">
+                    <div className="flex gap-4 bg-white/40 backdrop-blur-sm rounded-3xl p-3 overflow-x-auto">
+                        {tabs.map((tab) => (
+                            <motion.button
+                                key={tab.id}
+                                onClick={() => setActiveTab(tab.id)}
+                                className={`flex-1 min-w-[120px] tab ${activeTab === tab.id ? 'tab-active shadow-lg' : 'tab-inactive'}`}
+                                whileHover={{ scale: 1.02 }}
+                                whileTap={{ scale: 0.98 }}
+                            >
+                                <span className="mr-2">{tab.icon}</span>
+                                {tab.label}
+                            </motion.button>
+                        ))}
+                    </div>
+
+                    <div className="rounded-3xl bg-white/70 backdrop-blur-md border border-white/80 p-4 shadow-lg">
+                        <div className="flex items-center gap-3">
+                            <div className="w-11 h-11 rounded-2xl bg-pastel-purple/15 text-pastel-purple flex items-center justify-center">
+                                <Sparkles size={20} />
+                            </div>
+                            <div>
+                                <p className="text-sm text-gray-500">현재 선택</p>
+                                <p className="font-bold text-gray-800">{activeTabInfo?.label} 보관</p>
+                            </div>
+                        </div>
+                        <p className="text-sm text-gray-600 mt-3">
+                            이 구역에 재료가 <span className="font-bold text-gray-800">{filteredItems.length}개</span> 있어요.
+                        </p>
+                    </div>
                 </div>
 
-                {/* Inventory Grid */}
                 <AnimatePresence mode="wait">
                     <motion.div
                         key={activeTab}
@@ -71,12 +105,10 @@ const Inventory = ({ inventory, onAddIngredient, onUpdateIngredient, onDeleteIng
                             >
                                 <Package className="mx-auto mb-4 text-gray-400" size={64} />
                                 <h3 className="text-xl font-bold text-gray-600 mb-2">
-                                    비어있습니다
+                                    비어 있어요
                                 </h3>
                                 <p className="text-gray-500">
-                                    {activeTab === 'refrigerated' && '냉장실이 비어있어요'}
-                                    {activeTab === 'frozen' && '냉동실이 비어있어요'}
-                                    {activeTab === 'room' && '실온 보관 식재료가 없어요'}
+                                    {activeTabInfo?.emptyText}
                                 </p>
                                 <motion.button
                                     onClick={() => setShowAddForm(true)}
@@ -89,20 +121,17 @@ const Inventory = ({ inventory, onAddIngredient, onUpdateIngredient, onDeleteIng
                                 </motion.button>
                             </motion.div>
                         ) : (
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                                 {filteredItems.map((item, index) => (
                                     <motion.div
                                         key={item.id}
                                         initial={{ opacity: 0, scale: 0.9 }}
                                         animate={{ opacity: 1, scale: 1 }}
-                                        transition={{ delay: index * 0.05 }}
+                                        transition={{ delay: index * 0.04 }}
                                         onClick={() => setSelectedIngredient(item)}
                                         className="cursor-pointer"
                                     >
-                                        <IngredientCard
-                                            ingredient={item}
-                                            onToggleFreeze={onToggleFreeze}
-                                        />
+                                        <IngredientCard ingredient={item} />
                                     </motion.div>
                                 ))}
                             </div>
@@ -110,23 +139,21 @@ const Inventory = ({ inventory, onAddIngredient, onUpdateIngredient, onDeleteIng
                     </motion.div>
                 </AnimatePresence>
 
-                {/* Tips */}
                 <motion.div
-                    className="mt-8 bg-white/60 backdrop-blur-sm rounded-2xl p-6"
+                    className="mt-2 bg-white/65 backdrop-blur-sm rounded-2xl p-6 border border-white/70"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    transition={{ delay: 0.5 }}
+                    transition={{ delay: 0.2 }}
                 >
-                    <h3 className="font-bold text-lg mb-2">💡 팁</h3>
+                    <h3 className="font-bold text-lg mb-2">빠른 사용 팁</h3>
                     <ul className="space-y-2 text-sm text-gray-700">
-                        <li>• 카드를 클릭하면 상세 정보를 볼 수 있어요</li>
-                        <li>• 상세 화면에서 재료를 수정하거나 삭제할 수 있어요</li>
-                        <li>• 냉장 ↔ 냉동 버튼으로 쉽게 이동할 수 있어요</li>
+                        <li>재료 카드를 누르면 수량, 유통기한, 보관 위치를 바로 수정할 수 있어요.</li>
+                        <li>냉장과 냉동 재료는 상세 창에서 한 번에 서로 이동시킬 수 있어요.</li>
+                        <li>유통기한이 가까운 재료부터 먼저 요리에 사용하면 낭비를 줄일 수 있어요.</li>
                     </ul>
                 </motion.div>
             </div>
 
-            {/* Add Ingredient Form Modal */}
             {showAddForm && (
                 <AddIngredientForm
                     onAdd={onAddIngredient}
@@ -134,7 +161,6 @@ const Inventory = ({ inventory, onAddIngredient, onUpdateIngredient, onDeleteIng
                 />
             )}
 
-            {/* Ingredient Detail Modal */}
             <AnimatePresence>
                 {selectedIngredient && (
                     <IngredientDetailModal
@@ -142,6 +168,7 @@ const Inventory = ({ inventory, onAddIngredient, onUpdateIngredient, onDeleteIng
                         onClose={() => setSelectedIngredient(null)}
                         onUpdate={onUpdateIngredient}
                         onDelete={onDeleteIngredient}
+                        onToggleFreeze={onToggleFreeze}
                     />
                 )}
             </AnimatePresence>
@@ -150,4 +177,3 @@ const Inventory = ({ inventory, onAddIngredient, onUpdateIngredient, onDeleteIng
 };
 
 export default Inventory;
-

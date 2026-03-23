@@ -25,7 +25,7 @@ const AddIngredientForm = ({ onAdd, onClose }) => {
     };
 
     const handleChange = (e) => {
-        setFormData(prev => ({
+        setFormData((prev) => ({
             ...prev,
             [e.target.name]: e.target.value
         }));
@@ -47,7 +47,6 @@ const AddIngredientForm = ({ onAdd, onClose }) => {
                     exit={{ scale: 0.9, y: 20 }}
                     onClick={(e) => e.stopPropagation()}
                 >
-                    {/* Header */}
                     <div className="flex justify-between items-center mb-6">
                         <h2 className="text-2xl font-bold text-gray-800">식재료 추가</h2>
                         <button
@@ -58,7 +57,6 @@ const AddIngredientForm = ({ onAdd, onClose }) => {
                         </button>
                     </div>
 
-                    {/* Form */}
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <div>
                             <label className="block text-sm font-semibold text-gray-700 mb-1">
@@ -70,7 +68,7 @@ const AddIngredientForm = ({ onAdd, onClose }) => {
                                 value={formData.name}
                                 onChange={handleChange}
                                 className="w-full px-4 py-2 border-2 border-gray-200 rounded-xl focus:border-pastel-purple focus:outline-none transition-colors"
-                                placeholder="예: 삼겹살"
+                                placeholder="예: 소고기"
                                 required
                             />
                         </div>
@@ -137,7 +135,6 @@ const AddIngredientForm = ({ onAdd, onClose }) => {
                             />
                         </div>
 
-                        {/* Submit Button */}
                         <motion.button
                             type="submit"
                             className="w-full btn-primary flex items-center justify-center gap-2"

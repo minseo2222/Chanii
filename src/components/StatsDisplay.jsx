@@ -5,7 +5,6 @@ const StatsDisplay = ({ level, xp, maxXp, coins }) => {
 
     return (
         <div className="w-full max-w-md space-y-4">
-            {/* Level and Coins */}
             <div className="flex justify-between items-center">
                 <div className="flex items-center gap-2">
                     <span className="text-3xl font-bold text-white drop-shadow-lg">Lv. {level}</span>
@@ -16,7 +15,6 @@ const StatsDisplay = ({ level, xp, maxXp, coins }) => {
                 </div>
             </div>
 
-            {/* XP Bar */}
             <div className="space-y-1">
                 <div className="flex justify-between text-sm font-semibold text-white drop-shadow">
                     <span>경험치</span>
@@ -27,7 +25,7 @@ const StatsDisplay = ({ level, xp, maxXp, coins }) => {
                         className="h-full bg-gradient-to-r from-pastel-purple via-pastel-blue to-pastel-green shadow-lg"
                         initial={{ width: 0 }}
                         animate={{ width: `${xpPercentage}%` }}
-                        transition={{ duration: 0.8, ease: "easeOut" }}
+                        transition={{ duration: 0.8, ease: 'easeOut' }}
                     />
                 </div>
             </div>

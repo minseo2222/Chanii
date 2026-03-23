@@ -1,82 +1,71 @@
-import { useState, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Clock, Flame, Star, Sparkles, ChefHat, ShoppingBag, Info, AlertCircle, Camera } from 'lucide-react';
+import { X, Clock, Flame, Star, Sparkles, ChefHat, ShoppingBag, Info, AlertCircle, Camera, SendHorizonal } from 'lucide-react';
+import { api } from '../lib/api';
 
 const RecipeDetailModal = ({ recipe, onClose, inventory, onComplete }) => {
     const [activeTab, setActiveTab] = useState('ingredients');
+    const [aiAdvice, setAiAdvice] = useState(null);
+    const [question, setQuestion] = useState('');
+    const [qaAnswer, setQaAnswer] = useState(null);
 
     const checkIngredientAvailability = (ingredientName) => {
-        return inventory?.some(item =>
+        return inventory?.some((item) =>
             item.name.toLowerCase().includes(ingredientName.toLowerCase())
         );
     };
 
-    const getSubstituteSuggestion = (ingredientName) => {
-        const substitutes = {
-            '대파': '양파 또는 쪽파로 대체하여 단맛을 낼 수 있어요.',
-            '참기름': '들기름을 쓰거나, 없으면 볶음참깨로 고소함을 더해보세요.',
-            '김치': '배추김치가 없다면 깍두기나 총각김치를 잘게 썰어 써보세요.',
-            '감자': '고구마로 대체하면 더 달콤해집니다.',
-            '호박': '애호박이나 단호박, 혹은 당근으로 식감을 살려보세요.',
-            '페페론치노': '청양고추나 고춧가루로 매운맛을 낼 수 있습니다.',
-            '파슬리': '쪽파의 파란 부분이나 바질로 색감을 낼 수 있어요. 없으면 생략 가능!',
-            '방울토마토': '일반 토마토를 썰어 쓰거나 케첩을 조금 넣어 감칠맛을 내보세요.',
-            '드레싱': '올리브오일, 레몬즙, 간장, 설탕을 섞어 간단 드레싱을 만들어보세요.',
-            '굴소스': '간장과 설탕을 1:1로 섞고 소금을 약간 치면 비슷해집니다.'
-        };
-        return substitutes[ingredientName] || '이 재료는 생략하거나 비슷한 식감의 재료로 대체해보세요.';
-    };
-
-    // Smart AI Advice Logic
-    const aiAdvice = useMemo(() => {
-        const missingIngredients = recipe.ingredients.filter(
-            ing => !checkIngredientAvailability(ing.name)
-        );
-
-        const missingRequired = missingIngredients.filter(ing => ing.required);
-        const missingOptional = missingIngredients.filter(ing => !ing.required);
-
-        const canCook = missingRequired.length === 0;
-
-        // Generate Contextual Message
-        let message = "";
-        let mood = "neutral";
-
-        if (canCook) {
-            if (missingOptional.length === 0) {
-                message = "와우! 완벽해요 🌟 모든 재료가 냉장고에 있습니다. 지금 바로 최고의 요리를 만들 수 있어요!";
-                mood = "happy";
-            } else {
-                message = "필수 재료는 모두 있네요! 👍 몇 가지 선택 재료가 없지만, 맛있는 요리를 만드는 데는 충분합니다.";
-                mood = "happy";
-            }
-        } else {
-            if (missingRequired.length === 1) {
-                message = `아쉽게도 핵심 재료인 '${missingRequired[0].name}' 하나가 부족해요. 🥺`;
-                mood = "concern";
-            } else {
-                message = "몇 가지 중요한 재료가 부족해 보입니다. 장을 보거나 대체 재료를 활용해야 할 것 같아요 🛒";
-                mood = "concern";
-            }
-        }
-
-        return {
-            missingRequired,
-            missingOptional,
-            canCook,
-            message,
-            mood
-        };
+    const missingIngredients = useMemo(() => {
+        return recipe.ingredients.filter((ing) => !checkIngredientAvailability(ing.name));
     }, [recipe, inventory]);
+
+    useEffect(() => {
+        let cancelled = false;
+
+        const loadAdvice = async () => {
+            try {
+                const [recommendations, substitutions] = await Promise.all([
+                    api.getRecommendations(inventory),
+                    api.getSubstitutions(recipe.id, missingIngredients.map((ing) => ing.name))
+                ]);
+
+                if (cancelled) return;
+                setAiAdvice({
+                    recommendations,
+                    substitutions
+                });
+            } catch (error) {
+                console.warn('Failed to load AI advice.', error);
+            }
+        };
+
+        loadAdvice();
+        return () => {
+            cancelled = true;
+        };
+    }, [inventory, missingIngredients, recipe.id]);
+
+    const handleAskQuestion = async () => {
+        if (!question.trim()) return;
+        try {
+            const answer = await api.askCookingQuestion({
+                question,
+                recipeId: recipe.id
+            });
+            setQaAnswer(answer);
+        } catch (error) {
+            console.warn('Failed to ask cooking question.', error);
+        }
+    };
 
     const tabs = [
         { id: 'ingredients', label: '재료', icon: ShoppingBag },
-        { id: 'steps', label: '요리법', icon: ChefHat },
+        { id: 'steps', label: '조리법', icon: ChefHat },
         { id: 'ai', label: 'AI 조언', icon: Sparkles }
     ];
 
-    const requiredIngredients = recipe.ingredients.filter(ing => ing.required);
-    const optionalIngredients = recipe.ingredients.filter(ing => !ing.required);
+    const requiredIngredients = recipe.ingredients.filter((ing) => ing.required);
+    const optionalIngredients = recipe.ingredients.filter((ing) => !ing.required);
 
     return (
         <motion.div
@@ -93,7 +82,6 @@ const RecipeDetailModal = ({ recipe, onClose, inventory, onComplete }) => {
                 className="bg-white rounded-3xl max-w-2xl w-full my-8 overflow-hidden shadow-2xl relative"
                 onClick={(e) => e.stopPropagation()}
             >
-                {/* Header Image */}
                 <div className="relative h-72">
                     <img
                         src={recipe.image}
@@ -111,11 +99,6 @@ const RecipeDetailModal = ({ recipe, onClose, inventory, onComplete }) => {
 
                     <div className="absolute bottom-6 left-6 right-6">
                         <div className="flex items-center gap-2 mb-2">
-                            {recipe.isOfficial && (
-                                <span className="bg-white/20 backdrop-blur-md text-white text-xs font-bold px-2 py-1 rounded-full border border-white/30">
-                                    ✨ 공식 레시피
-                                </span>
-                            )}
                             <span className="bg-white/20 backdrop-blur-md text-white text-xs font-bold px-2 py-1 rounded-full border border-white/30">
                                 {recipe.category}
                             </span>
@@ -140,7 +123,6 @@ const RecipeDetailModal = ({ recipe, onClose, inventory, onComplete }) => {
                     </div>
                 </div>
 
-                {/* Navigation Tabs */}
                 <div className="flex border-b border-gray-100 p-2 bg-gray-50/50 backdrop-blur-sm sticky top-0 z-10">
                     {tabs.map((tab) => {
                         const Icon = tab.icon;
@@ -149,8 +131,7 @@ const RecipeDetailModal = ({ recipe, onClose, inventory, onComplete }) => {
                             <button
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id)}
-                                className={`flex-1 py-3 rounded-xl flex items-center justify-center gap-2 font-bold transition-all relative overflow-hidden ${isActive ? 'text-pastel-purple bg-white shadow-sm' : 'text-gray-500 hover:bg-white/50'
-                                    }`}
+                                className={`flex-1 py-3 rounded-xl flex items-center justify-center gap-2 font-bold transition-all relative overflow-hidden ${isActive ? 'text-pastel-purple bg-white shadow-sm' : 'text-gray-500 hover:bg-white/50'}`}
                             >
                                 <Icon size={18} strokeWidth={isActive ? 2.5 : 2} />
                                 {tab.label}
@@ -165,7 +146,6 @@ const RecipeDetailModal = ({ recipe, onClose, inventory, onComplete }) => {
                     })}
                 </div>
 
-                {/* Content Area */}
                 <div className="p-6 pb-24 min-h-[400px] bg-white">
                     <AnimatePresence mode="wait">
                         {activeTab === 'ingredients' && (
@@ -187,7 +167,7 @@ const RecipeDetailModal = ({ recipe, onClose, inventory, onComplete }) => {
                                                 <div key={idx} className={`p-4 rounded-2xl flex items-center justify-between border ${hasItem ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
                                                     <div className="flex items-center gap-3">
                                                         <span className={`w-8 h-8 rounded-full flex items-center justify-center text-lg ${hasItem ? 'bg-green-100' : 'bg-white'}`}>
-                                                            {hasItem ? '✅' : '🚨'}
+                                                            {hasItem ? 'O' : '!'}
                                                         </span>
                                                         <div>
                                                             <p className={`font-bold ${hasItem ? 'text-green-900' : 'text-red-900'}`}>{ing.name}</p>
@@ -203,7 +183,7 @@ const RecipeDetailModal = ({ recipe, onClose, inventory, onComplete }) => {
                                 {optionalIngredients.length > 0 && (
                                     <div className="space-y-3 pt-2">
                                         <h3 className="font-bold text-lg text-blue-500 flex items-center gap-2">
-                                            <Info size={18} /> 선택 재료 (없어도 OK!)
+                                            <Info size={18} /> 선택 재료
                                         </h3>
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                             {optionalIngredients.map((ing, idx) => {
@@ -212,7 +192,7 @@ const RecipeDetailModal = ({ recipe, onClose, inventory, onComplete }) => {
                                                     <div key={idx} className={`p-4 rounded-2xl flex items-center justify-between border ${hasItem ? 'bg-blue-50 border-blue-200' : 'bg-gray-50 border-gray-200'}`}>
                                                         <div className="flex items-center gap-3">
                                                             <span className={`w-8 h-8 rounded-full flex items-center justify-center text-lg ${hasItem ? 'bg-blue-100' : 'bg-gray-200'}`}>
-                                                                {hasItem ? '✨' : '❔'}
+                                                                {hasItem ? 'O' : '-'}
                                                             </span>
                                                             <div>
                                                                 <p className={`font-bold ${hasItem ? 'text-blue-900' : 'text-gray-600'}`}>{ing.name}</p>
@@ -247,7 +227,7 @@ const RecipeDetailModal = ({ recipe, onClose, inventory, onComplete }) => {
                                             </p>
                                             {typeof step === 'object' && step.tip && (
                                                 <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-3 flex gap-3 text-sm text-yellow-800">
-                                                    <span className="text-lg">💡</span>
+                                                    <span className="text-lg">팁</span>
                                                     <div>
                                                         <span className="font-bold mr-1">TIPS:</span>
                                                         {step.tip}
@@ -268,42 +248,71 @@ const RecipeDetailModal = ({ recipe, onClose, inventory, onComplete }) => {
                                 exit={{ opacity: 0, x: 20 }}
                                 className="space-y-6"
                             >
-                                <div className={`bg-gradient-to-r p-6 rounded-3xl border shadow-sm ${aiAdvice.mood === 'happy' ? 'from-green-50 to-emerald-50 border-green-100' : 'from-orange-50 to-amber-50 border-orange-100'
-                                    }`}>
+                                <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-100 p-6 rounded-3xl shadow-sm">
                                     <h3 className="font-bold text-xl mb-3 flex items-center gap-2">
-                                        <Sparkles className={aiAdvice.mood === 'happy' ? "text-green-500" : "text-orange-500"} />
-                                        찬이의 요리 분석
+                                        <Sparkles className="text-green-500" />
+                                        찬이의 추천
                                     </h3>
                                     <p className="text-gray-700 leading-relaxed text-lg">
-                                        "{aiAdvice.message}"
+                                        {aiAdvice?.recommendations?.recommendations?.find((item) => item.recipeId === recipe.id)?.reason ||
+                                            '현재 냉장고 재료를 기준으로 이 레시피를 만들 수 있는지 분석 중이에요.'}
                                     </p>
                                 </div>
 
-                                {aiAdvice.missingOptional.length > 0 && (
+                                {aiAdvice?.substitutions?.adaptedIngredients?.length > 0 && (
                                     <div>
-                                        <h4 className="font-bold text-gray-700 mb-3 text-lg">💡 부족한 선택 재료 조언</h4>
+                                        <h4 className="font-bold text-gray-700 mb-3 text-lg">부족한 재료 대체안</h4>
                                         <div className="space-y-3">
-                                            {aiAdvice.missingOptional.map((ing, idx) => (
+                                            {aiAdvice.substitutions.adaptedIngredients.map((ing, idx) => (
                                                 <div key={idx} className="bg-white border-l-4 border-blue-400 p-4 rounded-r-xl shadow-sm hover:shadow-md transition-shadow">
                                                     <div className="flex justify-between items-start mb-2">
-                                                        <p className="font-bold text-blue-600 text-lg">{ing.name}</p>
-                                                        <span className="bg-blue-100 text-blue-600 px-2 py-1 rounded text-xs font-bold">선택</span>
+                                                        <p className="font-bold text-blue-600 text-lg">{ing.original}</p>
+                                                        <span className="bg-blue-100 text-blue-600 px-2 py-1 rounded text-xs font-bold">
+                                                            {ing.replacement ? `${ing.replacement}로 대체` : '생략 추천'}
+                                                        </span>
                                                     </div>
                                                     <div className="flex gap-3 text-sm text-gray-600 bg-gray-50 p-3 rounded-lg">
-                                                        <span className="text-xl">💡</span>
-                                                        <p>{getSubstituteSuggestion(ing.name)}</p>
+                                                        <span className="text-xl">팁</span>
+                                                        <p>{ing.note}</p>
                                                     </div>
                                                 </div>
                                             ))}
                                         </div>
                                     </div>
                                 )}
+
+                                <div className="space-y-3">
+                                    <h4 className="font-bold text-gray-700 text-lg">요리 질문하기</h4>
+                                    <div className="flex gap-2">
+                                        <input
+                                            value={question}
+                                            onChange={(e) => setQuestion(e.target.value)}
+                                            placeholder="예: 에어프라이어로도 가능해?"
+                                            className="flex-1 px-4 py-3 rounded-2xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-pastel-purple/40"
+                                        />
+                                        <button type="button" className="btn-primary px-4" onClick={handleAskQuestion}>
+                                            <SendHorizonal size={18} />
+                                        </button>
+                                    </div>
+
+                                    {qaAnswer && (
+                                        <div className="bg-gray-50 border border-gray-200 rounded-2xl p-4 space-y-3">
+                                            <p className="text-gray-800">{qaAnswer.answer}</p>
+                                            {qaAnswer.safetyNotes?.length > 0 && (
+                                                <ul className="text-sm text-gray-600 space-y-1">
+                                                    {qaAnswer.safetyNotes.map((note, index) => (
+                                                        <li key={index}>• {note}</li>
+                                                    ))}
+                                                </ul>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
                             </motion.div>
                         )}
                     </AnimatePresence>
                 </div>
 
-                {/* Fixed "Finish Cooking" Button at Bottom */}
                 <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-white via-white/95 to-transparent z-20">
                     <motion.button
                         onClick={() => onComplete?.(recipe)}
@@ -312,7 +321,7 @@ const RecipeDetailModal = ({ recipe, onClose, inventory, onComplete }) => {
                         whileTap={{ scale: 0.98 }}
                     >
                         <Camera size={24} />
-                        요리 완료 인증샷 찍기
+                        요리 완료 인증 남기기
                     </motion.button>
                 </div>
             </motion.div>

@@ -1,12 +1,13 @@
 import { motion } from 'framer-motion';
+import { NavLink } from 'react-router-dom';
 import { Home, Package, ChefHat, Users } from 'lucide-react';
 
-const BottomNav = ({ currentPage, onNavigate }) => {
+const BottomNav = () => {
     const navItems = [
-        { id: 'dashboard', label: '찬이', icon: Home },
-        { id: 'inventory', label: '인벤토리', icon: Package },
-        { id: 'recipes', label: '레시피', icon: ChefHat },
-        { id: 'community', label: '커뮤니티', icon: Users }
+        { id: 'dashboard', label: '찬이', icon: Home, path: '/' },
+        { id: 'inventory', label: '인벤토리', icon: Package, path: '/inventory' },
+        { id: 'recipes', label: '레시피', icon: ChefHat, path: '/recipes' },
+        { id: 'community', label: '커뮤니티', icon: Users, path: '/community' }
     ];
 
     return (
@@ -15,41 +16,44 @@ const BottomNav = ({ currentPage, onNavigate }) => {
                 <div className="flex items-center justify-around py-2">
                     {navItems.map((item) => {
                         const Icon = item.icon;
-                        const isActive = currentPage === item.id;
 
                         return (
-                            <motion.button
+                            <NavLink
                                 key={item.id}
-                                onClick={() => onNavigate(item.id)}
-                                className={`flex flex-col items-center justify-center py-2 px-4 rounded-xl transition-all relative ${isActive ? 'text-pastel-purple' : 'text-gray-500'
-                                    }`}
-                                whileTap={{ scale: 0.95 }}
+                                to={item.path}
+                                className="flex-1 flex justify-center"
+                                end={item.path === '/'}
                             >
-                                {/* Active indicator */}
-                                {isActive && (
-                                    <motion.div
-                                        layoutId="activeTab"
-                                        className="absolute inset-0 bg-gradient-to-r from-pastel-purple/10 to-pastel-blue/10 rounded-xl"
-                                        transition={{ type: 'spring', duration: 0.5 }}
-                                    />
-                                )}
-
-                                <div className="relative z-10 flex flex-col items-center gap-1">
-                                    <motion.div
-                                        animate={{
-                                            scale: isActive ? 1.1 : 1,
-                                            y: isActive ? -2 : 0
-                                        }}
-                                        transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                                {({ isActive }) => (
+                                    <motion.button
+                                        className={`flex flex-col items-center justify-center py-2 px-4 rounded-xl transition-all relative ${isActive ? 'text-pastel-purple' : 'text-gray-500'}`}
+                                        whileTap={{ scale: 0.95 }}
                                     >
-                                        <Icon size={24} strokeWidth={isActive ? 2.5 : 2} />
-                                    </motion.div>
-                                    <span className={`text-xs font-semibold ${isActive ? 'text-pastel-purple' : 'text-gray-500'
-                                        }`}>
-                                        {item.label}
-                                    </span>
-                                </div>
-                            </motion.button>
+                                        {isActive && (
+                                            <motion.div
+                                                layoutId="activeTab"
+                                                className="absolute inset-0 bg-gradient-to-r from-pastel-purple/10 to-pastel-blue/10 rounded-xl"
+                                                transition={{ type: 'spring', duration: 0.5 }}
+                                            />
+                                        )}
+
+                                        <div className="relative z-10 flex flex-col items-center gap-1">
+                                            <motion.div
+                                                animate={{
+                                                    scale: isActive ? 1.1 : 1,
+                                                    y: isActive ? -2 : 0
+                                                }}
+                                                transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                                            >
+                                                <Icon size={24} strokeWidth={isActive ? 2.5 : 2} />
+                                            </motion.div>
+                                            <span className={`text-xs font-semibold ${isActive ? 'text-pastel-purple' : 'text-gray-500'}`}>
+                                                {item.label}
+                                            </span>
+                                        </div>
+                                    </motion.button>
+                                )}
+                            </NavLink>
                         );
                     })}
                 </div>

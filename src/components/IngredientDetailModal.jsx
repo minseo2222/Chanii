@@ -1,24 +1,33 @@
-import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { X, Calendar, Snowflake, Thermometer, Trash2, Edit3 } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { motion } from 'framer-motion';
+import { X, Calendar, Snowflake, Thermometer, Trash2, Edit3, Package2, ArrowRightLeft } from 'lucide-react';
 import { calculateFreshness } from '../data/mockInventory';
 
-const IngredientDetailModal = ({ ingredient, onClose, onUpdate, onDelete }) => {
+const locationLabels = {
+    refrigerated: { label: '냉장', icon: Thermometer },
+    frozen: { label: '냉동', icon: Snowflake },
+    room: { label: '실온', icon: Calendar }
+};
+
+const IngredientDetailModal = ({ ingredient, onClose, onUpdate, onDelete, onToggleFreeze }) => {
     const [isEditing, setIsEditing] = useState(false);
     const [editData, setEditData] = useState({
         name: ingredient.name,
         location: ingredient.location,
-        purchaseDate: ingredient.purchaseDate,
-        expiryDate: ingredient.expiryDate
+        addedDate: ingredient.addedDate,
+        expiryDate: ingredient.expiryDate,
+        quantity: ingredient.quantity,
+        processingState: ingredient.processingState
     });
 
-    const freshness = calculateFreshness(ingredient.expiryDate);
+    const freshness = calculateFreshness(editData.expiryDate);
+    const LocationIcon = locationLabels[editData.location].icon;
 
-    const locationLabels = {
-        refrigerated: { label: '냉장', icon: Thermometer, color: 'blue' },
-        frozen: { label: '냉동', icon: Snowflake, color: 'cyan' },
-        room: { label: '실온', icon: Calendar, color: 'amber' }
-    };
+    const transferTarget = useMemo(() => {
+        if (editData.location === 'refrigerated') return '냉동';
+        if (editData.location === 'frozen') return '냉장';
+        return null;
+    }, [editData.location]);
 
     const handleSave = () => {
         onUpdate(ingredient.id, editData);
@@ -26,22 +35,18 @@ const IngredientDetailModal = ({ ingredient, onClose, onUpdate, onDelete }) => {
         onClose();
     };
 
-    const handleToggleFreeze = () => {
-        if (ingredient.location !== 'room') {
-            const newLocation = ingredient.location === 'refrigerated' ? 'frozen' : 'refrigerated';
-            onUpdate(ingredient.id, { ...editData, location: newLocation });
-            setEditData({ ...editData, location: newLocation });
-        }
-    };
-
     const handleDelete = () => {
-        if (confirm(`${ingredient.name}을(를) 삭제하시겠습니까?`)) {
+        if (confirm(`${ingredient.name}을(를) 삭제할까요?`)) {
             onDelete(ingredient.id);
             onClose();
         }
     };
 
-    const LocationIcon = locationLabels[editData.location].icon;
+    const handleTransfer = () => {
+        if (!transferTarget) return;
+        onToggleFreeze?.(ingredient.id);
+        onClose();
+    };
 
     return (
         <motion.div
@@ -55,10 +60,9 @@ const IngredientDetailModal = ({ ingredient, onClose, onUpdate, onDelete }) => {
                 initial={{ scale: 0.9, y: 20 }}
                 animate={{ scale: 1, y: 0 }}
                 exit={{ scale: 0.9, y: 20 }}
-                className="bg-white rounded-3xl p-6 max-w-md w-full"
+                className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl"
                 onClick={(e) => e.stopPropagation()}
             >
-                {/* Header */}
                 <div className="flex items-center justify-between mb-6">
                     <h2 className="text-2xl font-bold">
                         {isEditing ? '재료 수정' : '재료 상세'}
@@ -79,16 +83,13 @@ const IngredientDetailModal = ({ ingredient, onClose, onUpdate, onDelete }) => {
                     </div>
                 </div>
 
-                {/* Emoji Icon */}
                 <div className="flex justify-center mb-6">
-                    <div className="w-24 h-24 bg-gradient-to-br from-pastel-pink to-pastel-peach rounded-full flex items-center justify-center text-6xl shadow-lg">
-                        {ingredient.emoji}
+                    <div className="w-24 h-24 bg-gradient-to-br from-pastel-pink to-pastel-peach rounded-full flex items-center justify-center shadow-lg">
+                        <Package2 className="w-12 h-12 text-white" />
                     </div>
                 </div>
 
-                {/* Content */}
                 <div className="space-y-4">
-                    {/* Name */}
                     <div>
                         <label className="text-sm font-semibold text-gray-600 block mb-1">
                             재료명
@@ -105,61 +106,94 @@ const IngredientDetailModal = ({ ingredient, onClose, onUpdate, onDelete }) => {
                         )}
                     </div>
 
-                    {/* Location */}
                     <div>
                         <label className="text-sm font-semibold text-gray-600 block mb-2">
                             보관 위치
                         </label>
                         {isEditing ? (
                             <div className="flex gap-2">
-                                {Object.entries(locationLabels).map(([key, { label, color }]) => (
+                                {Object.entries(locationLabels).map(([key, { label }]) => (
                                     <button
                                         key={key}
+                                        type="button"
                                         onClick={() => setEditData({ ...editData, location: key })}
-                                        className={`flex-1 py-2 px-3 rounded-xl font-semibold transition-all ${editData.location === key
-                                                ? `bg-${color}-500 text-white shadow-md`
-                                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                                            }`}
+                                        className={`flex-1 py-2 px-3 rounded-xl font-semibold transition-all ${editData.location === key ? 'bg-pastel-purple text-white shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
                                     >
                                         {label}
                                     </button>
                                 ))}
                             </div>
                         ) : (
-                            <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full bg-${locationLabels[ingredient.location].color}-100 text-${locationLabels[ingredient.location].color}-700`}>
+                            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gray-100 text-gray-700">
                                 <LocationIcon size={18} />
                                 <span className="font-semibold">{locationLabels[ingredient.location].label}</span>
                             </div>
                         )}
                     </div>
 
-                    {/* Quick Toggle (only for refrigerated/frozen) */}
-                    {!isEditing && ingredient.location !== 'room' && (
+                    {!isEditing && transferTarget && (
                         <motion.button
-                            onClick={handleToggleFreeze}
-                            className="w-full bg-gradient-to-r from-cyan-400 to-blue-500 text-white font-semibold py-3 rounded-xl shadow-md"
-                            whileHover={{ scale: 1.02 }}
+                            type="button"
+                            onClick={handleTransfer}
+                            className="w-full rounded-2xl bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-semibold py-3 px-4 shadow-lg flex items-center justify-center gap-2"
+                            whileHover={{ scale: 1.01 }}
                             whileTap={{ scale: 0.98 }}
                         >
-                            {ingredient.location === 'refrigerated' ? '냉동실로 이동 ❄️' : '냉장실로 이동 🧊'}
+                            <ArrowRightLeft size={18} />
+                            {transferTarget} 보관으로 옮기기
                         </motion.button>
                     )}
 
-                    {/* Dates */}
+                    <div>
+                        <label className="text-sm font-semibold text-gray-600 block mb-1">
+                            수량
+                        </label>
+                        {isEditing ? (
+                            <input
+                                type="text"
+                                value={editData.quantity}
+                                onChange={(e) => setEditData({ ...editData, quantity: e.target.value })}
+                                className="w-full px-4 py-2 rounded-xl border-2 border-gray-200 focus:border-pastel-purple focus:outline-none"
+                            />
+                        ) : (
+                            <p className="text-base text-gray-700">{ingredient.quantity}</p>
+                        )}
+                    </div>
+
+                    <div>
+                        <label className="text-sm font-semibold text-gray-600 block mb-1">
+                            손질 상태
+                        </label>
+                        {isEditing ? (
+                            <select
+                                value={editData.processingState}
+                                onChange={(e) => setEditData({ ...editData, processingState: e.target.value })}
+                                className="w-full px-4 py-2 rounded-xl border-2 border-gray-200 focus:border-pastel-purple focus:outline-none"
+                            >
+                                <option value="원물">원물</option>
+                                <option value="소분">소분</option>
+                                <option value="손질">손질</option>
+                                <option value="완제품">완제품</option>
+                            </select>
+                        ) : (
+                            <p className="text-base text-gray-700">{ingredient.processingState}</p>
+                        )}
+                    </div>
+
                     <div className="grid grid-cols-2 gap-4">
                         <div>
                             <label className="text-sm font-semibold text-gray-600 block mb-1">
-                                구매일
+                                등록일
                             </label>
                             {isEditing ? (
                                 <input
                                     type="date"
-                                    value={editData.purchaseDate}
-                                    onChange={(e) => setEditData({ ...editData, purchaseDate: e.target.value })}
+                                    value={editData.addedDate}
+                                    onChange={(e) => setEditData({ ...editData, addedDate: e.target.value })}
                                     className="w-full px-3 py-2 rounded-xl border-2 border-gray-200 focus:border-pastel-purple focus:outline-none text-sm"
                                 />
                             ) : (
-                                <p className="text-sm text-gray-700">{ingredient.purchaseDate}</p>
+                                <p className="text-sm text-gray-700">{ingredient.addedDate}</p>
                             )}
                         </div>
                         <div>
@@ -179,16 +213,11 @@ const IngredientDetailModal = ({ ingredient, onClose, onUpdate, onDelete }) => {
                         </div>
                     </div>
 
-                    {/* Freshness Indicator */}
                     {!isEditing && (
                         <div className="bg-gray-50 rounded-2xl p-4">
                             <div className="flex items-center justify-between mb-2">
                                 <span className="text-sm font-semibold text-gray-600">신선도</span>
-                                <span className={`text-sm font-bold ${freshness.status === 'fresh' ? 'text-green-600' :
-                                        freshness.status === 'warning' ? 'text-yellow-600' :
-                                            freshness.status === 'danger' ? 'text-orange-600' :
-                                                'text-red-600'
-                                    }`}>
+                                <span className="text-sm font-bold text-gray-700">
                                     {freshness.days > 0 ? `${freshness.days}일 남음` : '유통기한 만료'}
                                 </span>
                             </div>
@@ -196,18 +225,13 @@ const IngredientDetailModal = ({ ingredient, onClose, onUpdate, onDelete }) => {
                                 <motion.div
                                     initial={{ width: 0 }}
                                     animate={{ width: `${freshness.percentage}%` }}
-                                    className={`h-full rounded-full ${freshness.status === 'fresh' ? 'bg-green-500' :
-                                            freshness.status === 'warning' ? 'bg-yellow-500' :
-                                                freshness.status === 'danger' ? 'bg-orange-500' :
-                                                    'bg-red-500'
-                                        }`}
+                                    className={`h-full rounded-full ${freshness.status === 'good' ? 'bg-green-500' : freshness.status === 'warning' ? 'bg-yellow-500' : 'bg-red-500'}`}
                                 />
                             </div>
                         </div>
                     )}
                 </div>
 
-                {/* Action Buttons */}
                 <div className="mt-6 flex gap-3">
                     {isEditing ? (
                         <>

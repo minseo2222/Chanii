@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { MessageCircle, Heart, User } from 'lucide-react';
+import { MessageCircle, Heart } from 'lucide-react';
 
 const CommunityBoard = ({ posts }) => {
     return (
@@ -13,17 +13,23 @@ const CommunityBoard = ({ posts }) => {
                     className="bg-white rounded-xl p-4 shadow-sm active:scale-[0.99] transition-transform cursor-pointer border border-gray-100"
                 >
                     <div className="flex gap-4">
-                        {/* Thumbnail (if exists) */}
                         {post.thumbnail && (
                             <div className="w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100 inline-block">
-                                <img src={post.thumbnail} alt={post.title} className="w-full h-full object-cover" />
+                                <img
+                                    src={post.thumbnail}
+                                    alt={post.title}
+                                    className="w-full h-full object-cover"
+                                    loading="lazy"
+                                />
                             </div>
                         )}
 
                         <div className="flex-1 min-w-0 flex flex-col justify-between">
                             <div>
                                 <h3 className="font-bold text-gray-800 line-clamp-1 text-lg mb-1">{post.title}</h3>
-                                <p className="text-sm text-gray-500 line-clamp-2">{post.description || post.title + ' 레시피 공유합니다!'}</p>
+                                <p className="text-sm text-gray-500 line-clamp-2">
+                                    {post.description || `${post.title} 레시피를 공유했어요.`}
+                                </p>
                             </div>
 
                             <div className="flex items-center justify-between mt-2 text-xs text-gray-400">
@@ -34,7 +40,7 @@ const CommunityBoard = ({ posts }) => {
                                 </div>
                                 <div className="flex items-center gap-3">
                                     <div className="flex items-center gap-1 text-red-400">
-                                        <Heart size={14} className={post.likes > 0 ? "fill-red-400" : ""} />
+                                        <Heart size={14} className={post.likes > 0 ? 'fill-red-400' : ''} />
                                         <span>{post.likes}</span>
                                     </div>
                                     <div className="flex items-center gap-1 text-blue-400">

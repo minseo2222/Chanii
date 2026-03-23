@@ -2,25 +2,21 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Plus } from 'lucide-react';
 import ShortsFeed from '../components/ShortsFeed';
-import PopularRecipes from '../components/PopularRecipes';
 import CommunityBoard from '../components/CommunityBoard';
-import { mockShortsData, mockBoardPosts } from '../data/mockCommunityData';
 
-const Community = ({ inventory, onOpenUpload }) => {
+const Community = ({ inventory, posts = [], shorts = [], onOpenUpload }) => {
     const [activeTab, setActiveTab] = useState('shorts');
 
     const tabs = [
-        { id: 'shorts', label: '숏폼' },
+        { id: 'shorts', label: '쇼츠' },
         { id: 'all', label: '전체' },
-        { id: 'popular', label: '인기' },
+        { id: 'popular', label: '인기' }
     ];
 
-    // Filter popular posts for the Popular tab (e.g., likes > 100)
-    const popularPosts = mockBoardPosts.filter(post => post.likes >= 100);
+    const popularPosts = posts.filter((post) => post.likes >= 100);
 
     return (
         <div className="min-h-screen pb-20">
-            {/* Header with Tabs */}
             <div className="sticky top-0 bg-white/80 backdrop-blur-md z-40 border-b border-gray-200">
                 <div className="max-w-screen-xl mx-auto px-4 py-4">
                     <h1 className="text-3xl font-bold text-center mb-4 bg-gradient-to-r from-pastel-purple to-pastel-blue bg-clip-text text-transparent">
@@ -31,8 +27,7 @@ const Community = ({ inventory, onOpenUpload }) => {
                             <motion.button
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id)}
-                                className={`tab ${activeTab === tab.id ? 'tab-active' : 'tab-inactive'
-                                    }`}
+                                className={`tab ${activeTab === tab.id ? 'tab-active' : 'tab-inactive'}`}
                                 whileHover={{ scale: 1.05 }}
                                 whileTap={{ scale: 0.95 }}
                             >
@@ -43,30 +38,28 @@ const Community = ({ inventory, onOpenUpload }) => {
                 </div>
             </div>
 
-            {/* Content Area */}
             <div className="max-w-screen-xl mx-auto">
-                {activeTab === 'shorts' && <ShortsFeed inventory={inventory} />}
+                {activeTab === 'shorts' && <ShortsFeed inventory={inventory} shorts={shorts} />}
 
                 {activeTab === 'all' && (
                     <div className="p-4">
                         <div className="mb-4 text-sm text-gray-500 font-medium px-2">
-                            📢 자유롭게 레시피를 공유하는 공간입니다.
+                            자유롭게 레시피를 공유하는 공간이에요.
                         </div>
-                        <CommunityBoard posts={mockBoardPosts} />
+                        <CommunityBoard posts={posts} />
                     </div>
                 )}
 
                 {activeTab === 'popular' && (
                     <div className="p-4">
                         <div className="mb-4 text-sm text-gray-500 font-medium px-2">
-                            🔥 지금 가장 핫한 레시피들입니다.
+                            지금 가장 반응이 좋은 레시피들이에요.
                         </div>
                         <CommunityBoard posts={popularPosts} />
                     </div>
                 )}
             </div>
 
-            {/* Floating Action Button */}
             <motion.button
                 onClick={() => onOpenUpload?.()}
                 className="fixed bottom-24 right-6 w-14 h-14 bg-gradient-to-r from-pastel-purple to-pastel-blue text-white rounded-full shadow-lg flex items-center justify-center z-40"
