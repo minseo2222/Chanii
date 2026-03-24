@@ -1,70 +1,76 @@
 import { motion } from 'framer-motion';
-import { Clock, Flame, ChevronRight, CheckCircle2 } from 'lucide-react';
+import { CheckCircle2, ChevronRight, Clock, Flame, Sparkles } from 'lucide-react';
+import { getRecipeAvailability } from '../lib/recipeMatcher';
 
 const RecipeCard = ({ recipe, onClick, inventory, isCooked }) => {
-    const availableIngredients = recipe.ingredients.filter((ing) =>
-        inventory.some((item) => item.name.includes(ing.name))
-    );
-    const missingIngredients = recipe.ingredients.length - availableIngredients.length;
-    const matchPercentage = Math.round((availableIngredients.length / recipe.ingredients.length) * 100);
+  const availability = getRecipeAvailability(recipe, inventory);
 
-    return (
-        <motion.div
-            layout
-            onClick={onClick}
-            className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 hover:shadow-md transition-shadow cursor-pointer flex gap-4 relative overflow-hidden"
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-        >
-            {isCooked && (
-                <div className="absolute top-0 left-0 bg-green-500 text-white text-xs font-bold px-2 py-1 rounded-br-xl z-20 flex items-center gap-1">
-                    <CheckCircle2 size={12} />
-                    요리 완료
-                </div>
-            )}
+  return (
+    <motion.article
+      layout
+      onClick={onClick}
+      className="section-card relative cursor-pointer overflow-hidden p-4"
+      whileHover={{ y: -2 }}
+      whileTap={{ scale: 0.99 }}
+    >
+      {isCooked ? (
+        <div className="absolute left-4 top-4 z-10 inline-flex items-center gap-1 rounded-full bg-emerald-500 px-3 py-1 text-xs font-bold text-white">
+          <CheckCircle2 size={12} />
+          요리 완료
+        </div>
+      ) : null}
 
-            <div className="w-24 h-24 rounded-xl overflow-hidden flex-shrink-0 bg-gray-100 relative">
-                <img
-                    src={recipe.image}
-                    alt={recipe.name}
-                    className="w-full h-full object-cover"
-                    loading="lazy"
-                />
+      <div className="flex gap-4">
+        <div className="relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-2xl bg-slate-100">
+          <img src={recipe.image} alt={recipe.name} className="h-full w-full object-cover" loading="lazy" />
+        </div>
+
+        <div className="min-w-0 flex-1">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <div className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
+                <Sparkles size={12} />
+                {recipe.category}
+              </div>
+              <h3 className="mt-2 line-clamp-1 text-lg font-bold text-slate-900">{recipe.name}</h3>
+              <p className="mt-1 line-clamp-2 text-sm text-slate-500">{recipe.description}</p>
             </div>
-
-            <div className="flex-1 min-w-0 flex flex-col justify-between">
-                <div>
-                    <h3 className="font-bold text-gray-800 text-lg line-clamp-1">{recipe.name}</h3>
-
-                    <div className="flex items-center gap-2 mt-1">
-                        <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${matchPercentage === 100 ? 'bg-green-100 text-green-700' : matchPercentage >= 70 ? 'bg-yellow-100 text-yellow-700' : 'bg-gray-100 text-gray-600'}`}>
-                            재료 {matchPercentage}%
-                        </span>
-                        <span className="text-xs text-gray-400">
-                            {missingIngredients === 0 ? '바로 조리 가능' : `${missingIngredients}개 부족`}
-                        </span>
-                    </div>
-                </div>
-
-                <div className="flex items-center justify-between mt-2">
-                    <div className="flex items-center gap-3 text-xs text-gray-500 font-medium">
-                        <div className="flex items-center gap-1">
-                            <Clock size={14} />
-                            {recipe.cookingTime}분
-                        </div>
-                        <div className="flex items-center gap-1">
-                            <Flame size={14} />
-                            {recipe.calories} kcal
-                        </div>
-                    </div>
-                </div>
+            <div className="self-center text-slate-300">
+              <ChevronRight />
             </div>
+          </div>
 
-            <div className="self-center text-gray-300">
-                <ChevronRight />
+          <div className="mt-4 flex flex-wrap items-center gap-2">
+            <span
+              className={`rounded-full px-3 py-1 text-xs font-bold ${
+                availability.readyToCook
+                  ? 'bg-emerald-50 text-emerald-700'
+                  : availability.matchPercentage >= 70
+                    ? 'bg-amber-50 text-amber-700'
+                    : 'bg-slate-100 text-slate-600'
+              }`}
+            >
+              재료 매칭 {availability.matchPercentage}%
+            </span>
+            <span className="text-xs text-slate-500">
+              {availability.readyToCook ? '바로 조리 가능' : `핵심 재료 ${availability.missingRequiredIngredients.length}개 부족`}
+            </span>
+          </div>
+
+          <div className="mt-4 flex items-center gap-4 text-xs font-medium text-slate-500">
+            <div className="flex items-center gap-1">
+              <Clock size={14} />
+              {recipe.cookingTime}분
             </div>
-        </motion.div>
-    );
+            <div className="flex items-center gap-1">
+              <Flame size={14} />
+              {recipe.calories} kcal
+            </div>
+          </div>
+        </div>
+      </div>
+    </motion.article>
+  );
 };
 
 export default RecipeCard;

@@ -11,9 +11,9 @@ export default defineConfig({
       manifest: {
         name: '찬이 - 냉장고 가이드',
         short_name: '찬이',
-        description: '자취생을 위한 게이미피케이션 기반 식재료 관리 및 레시피 추천 앱',
-        theme_color: '#FFB3BA',
-        background_color: '#FFFFFF',
+        description: '자취생을 위한 게이미피케이션 기반 식재료 관리와 레시피 추천 앱',
+        theme_color: '#ffffff',
+        background_color: '#ffffff',
         display: 'standalone',
         start_url: '/',
         lang: 'ko',

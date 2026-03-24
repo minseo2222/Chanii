@@ -1,211 +1,195 @@
-import { useState, useRef, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Heart, MessageCircle, Share2, X, ShoppingBag } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { AlertCircle, CheckCircle2, Heart, MessageCircle, Share2, ShoppingBag, X } from 'lucide-react';
+import { normalizeText } from '../lib/recipeMatcher';
 
 const ShortsFeed = ({ inventory, shorts: initialShorts = [] }) => {
-    const [shorts, setShorts] = useState(initialShorts);
-    const [selectedShort, setSelectedShort] = useState(null);
-    const [showIngredientModal, setShowIngredientModal] = useState(false);
-    const containerRef = useRef(null);
+  const [shorts, setShorts] = useState(initialShorts);
+  const [selectedShort, setSelectedShort] = useState(null);
 
-    useEffect(() => {
-        setShorts(initialShorts);
-    }, [initialShorts]);
+  useEffect(() => {
+    setShorts(initialShorts);
+  }, [initialShorts]);
 
-    const handleLike = (id) => {
-        setShorts((prev) =>
-            prev.map((short) =>
-                short.id === id
-                    ? { ...short, isLiked: !short.isLiked, likes: short.isLiked ? short.likes - 1 : short.likes + 1 }
-                    : short
-            )
-        );
-    };
+  const handleLike = (id) => {
+    setShorts((prev) =>
+      prev.map((short) =>
+        short.id === id
+          ? { ...short, isLiked: !short.isLiked, likes: short.isLiked ? short.likes - 1 : short.likes + 1 }
+          : short
+      )
+    );
+  };
 
-    const handleCheckIngredients = (short) => {
-        setSelectedShort(short);
-        setShowIngredientModal(true);
-    };
+  const checkIngredientAvailability = (ingredientName) =>
+    inventory?.some((item) => normalizeText(item.name).includes(normalizeText(ingredientName)));
 
-    const checkIngredientAvailability = (ingredientName) => {
-        return inventory?.some((item) =>
-            item.name.toLowerCase().includes(ingredientName.toLowerCase())
-        );
-    };
-
+  if (!shorts.length) {
     return (
-        <div className="flex justify-center bg-black min-h-screen">
-            <div
-                ref={containerRef}
-                className="w-full max-w-md h-[calc(100vh-80px)] overflow-y-scroll snap-y snap-mandatory scrollbar-hide bg-gray-900"
-            >
-                {shorts.map((short) => (
-                    <div
-                        key={short.id}
-                        className="relative w-full h-full snap-start snap-always"
-                    >
-                        <img
-                            src={short.thumbnail}
-                            alt={short.title}
-                            className="absolute inset-0 w-full h-full object-cover"
-                            loading="lazy"
-                        />
+      <div className="section-card px-6 py-16 text-center">
+        <h3 className="text-xl font-bold text-slate-900">아직 올라온 쇼츠가 없어요</h3>
+        <p className="mt-2 text-slate-500">짧은 요리 팁이나 완성 사진을 올리면 발견성이 크게 좋아져요.</p>
+      </div>
+    );
+  }
 
-                        <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/80" />
-
-                        <div className="absolute top-6 left-4 flex items-center gap-3 z-10">
-                            <div className="w-10 h-10 border-2 border-white rounded-full overflow-hidden">
-                                <div className="w-full h-full bg-gradient-to-tr from-purple-500 to-pink-500 flex items-center justify-center text-lg text-white font-bold">
-                                    {short.userAvatar}
-                                </div>
-                            </div>
-                            <span className="text-white font-bold text-shadow shadow-black/50">
-                                {short.username}
-                            </span>
-                            <button className="bg-white text-black text-xs font-bold px-3 py-1 rounded-full">
-                                팔로우
-                            </button>
-                        </div>
-
-                        <div className="absolute right-4 bottom-24 flex flex-col gap-6 items-center z-10">
-                            <div className="flex flex-col items-center gap-1">
-                                <button
-                                    onClick={() => handleLike(short.id)}
-                                    className="p-2 transition-transform active:scale-75"
-                                >
-                                    <Heart
-                                        size={36}
-                                        fill={short.isLiked ? '#ef4444' : 'transparent'}
-                                        stroke={short.isLiked ? '#ef4444' : 'white'}
-                                        strokeWidth={2}
-                                        className="drop-shadow-lg"
-                                    />
-                                </button>
-                                <span className="text-white text-xs font-bold shadow-black/50 drop-shadow-md">
-                                    {short.likes}
-                                </span>
-                            </div>
-
-                            <div className="flex flex-col items-center gap-1">
-                                <button className="p-2 transition-transform active:scale-90">
-                                    <MessageCircle size={34} stroke="white" strokeWidth={2} className="drop-shadow-lg" />
-                                </button>
-                                <span className="text-white text-xs font-bold shadow-black/50 drop-shadow-md">
-                                    {short.comments}
-                                </span>
-                            </div>
-
-                            <button className="p-2 transition-transform active:scale-90">
-                                <Share2 size={34} stroke="white" strokeWidth={2} className="drop-shadow-lg" />
-                            </button>
-
-                            <div className="w-10 h-10 rounded-full border-2 border-white overflow-hidden animate-spin-slow mt-2">
-                                <div className="w-full h-full bg-gray-800" />
-                            </div>
-                        </div>
-
-                        <div className="absolute bottom-0 left-0 right-0 p-4 pb-8 z-10 bg-gradient-to-t from-black/90 to-transparent pt-20">
-                            <h3 className="text-white text-lg font-bold mb-3 drop-shadow-md line-clamp-2 pr-12">
-                                {short.title}
-                            </h3>
-
-                            <div className="flex flex-wrap gap-2 mb-4">
-                                {short.ingredients.slice(0, 3).map((ing, i) => (
-                                    <span key={i} className="bg-white/20 backdrop-blur-md text-white border border-white/30 px-3 py-1 rounded-full text-xs">
-                                        {ing.name}
-                                    </span>
-                                ))}
-                                {short.ingredients.length > 3 && (
-                                    <span className="bg-white/20 backdrop-blur-md text-white border border-white/30 px-3 py-1 rounded-full text-xs">
-                                        +{short.ingredients.length - 3}
-                                    </span>
-                                )}
-                            </div>
-
-                            <button
-                                onClick={() => handleCheckIngredients(short)}
-                                className="w-full bg-pastel-purple hover:bg-purple-500 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition-colors shadow-lg"
-                            >
-                                <ShoppingBag size={18} />
-                                이 재료로 요리하기
-                            </button>
-                        </div>
-                    </div>
-                ))}
+  return (
+    <div className="flex justify-center">
+      <div className="w-full max-w-md space-y-4">
+        {shorts.map((short) => (
+          <section key={short.id} className="relative overflow-hidden rounded-[2rem] bg-slate-900 shadow-lg">
+            <div className="absolute inset-0">
+              <img src={short.thumbnail} alt={short.title} className="h-full w-full object-cover opacity-75" loading="lazy" />
+              <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/20 to-black/80" />
             </div>
 
-            <AnimatePresence>
-                {showIngredientModal && selectedShort && (
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-                        onClick={() => setShowIngredientModal(false)}
+            <div className="relative flex min-h-[520px] flex-col justify-between p-5">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-full border border-white/40 bg-white/10 text-sm font-bold text-white backdrop-blur">
+                    {short.userAvatar || '찬'}
+                  </div>
+                  <div>
+                    <p className="font-semibold text-white">{short.username || '찬이 사용자'}</p>
+                    <p className="text-xs text-white/70">요리 쇼츠</p>
+                  </div>
+                </div>
+                <button type="button" className="rounded-full bg-white px-3 py-1 text-xs font-bold text-slate-900">
+                  팔로우
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div className="space-y-3">
+                  <h3 className="pr-8 text-2xl font-bold text-white drop-shadow-sm">{short.title}</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {short.ingredients.slice(0, 4).map((ingredient, index) => (
+                      <span
+                        key={`${short.id}-${ingredient.name}-${index}`}
+                        className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs text-white backdrop-blur"
+                      >
+                        {ingredient.name}
+                      </span>
+                    ))}
+                    {short.ingredients.length > 4 ? (
+                      <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs text-white/80 backdrop-blur">
+                        +{short.ingredients.length - 4}
+                      </span>
+                    ) : null}
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-5 text-white">
+                    <button type="button" onClick={() => handleLike(short.id)} className="flex items-center gap-2">
+                      <Heart
+                        size={22}
+                        className={short.isLiked ? 'fill-red-400 text-red-400' : 'text-white'}
+                        strokeWidth={2}
+                      />
+                      <span className="text-sm font-semibold">{short.likes}</span>
+                    </button>
+                    <button type="button" className="flex items-center gap-2">
+                      <MessageCircle size={22} />
+                      <span className="text-sm font-semibold">{short.comments}</span>
+                    </button>
+                    <button type="button" className="flex items-center gap-2">
+                      <Share2 size={22} />
+                      <span className="text-sm font-semibold">공유</span>
+                    </button>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setSelectedShort(short)}
+                  className="flex w-full items-center justify-center gap-2 rounded-2xl bg-white px-4 py-3 font-semibold text-slate-900"
+                >
+                  <ShoppingBag size={18} />
+                  내 재료로 가능한지 보기
+                </button>
+              </div>
+            </div>
+          </section>
+        ))}
+      </div>
+
+      <AnimatePresence>
+        {selectedShort ? (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="modal-overlay"
+            onClick={() => setSelectedShort(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.96, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.96, y: 20 }}
+              className="modal-content w-full max-w-md p-6"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <div className="mb-6 flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-sm font-semibold text-slate-500">Ingredient Check</p>
+                  <h3 className="mt-1 text-2xl font-bold text-slate-900">재료 체크</h3>
+                  <p className="mt-2 text-sm text-slate-500">현재 냉장고와 비교해서 바로 가능한지 보여줘요.</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setSelectedShort(null)}
+                  className="flex h-11 w-11 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition-colors hover:bg-slate-200"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div className="space-y-3">
+                {selectedShort.ingredients.map((ingredient, index) => {
+                  const hasIngredient = checkIngredientAvailability(ingredient.name);
+
+                  return (
+                    <div
+                      key={`${selectedShort.id}-${ingredient.name}-${index}`}
+                      className={`flex items-center justify-between rounded-2xl border p-4 ${
+                        hasIngredient ? 'border-emerald-100 bg-emerald-50' : 'border-amber-100 bg-amber-50'
+                      }`}
                     >
-                        <motion.div
-                            initial={{ scale: 0.9, y: 50 }}
-                            animate={{ scale: 1, y: 0 }}
-                            exit={{ scale: 0.9, y: 50 }}
-                            className="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl"
-                            onClick={(e) => e.stopPropagation()}
+                      <div className="flex items-center gap-3">
+                        <div
+                          className={`flex h-10 w-10 items-center justify-center rounded-full ${
+                            hasIngredient ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
+                          }`}
                         >
-                            <div className="flex items-center justify-between mb-6">
-                                <div>
-                                    <h3 className="text-xl font-bold text-gray-800">재료 체크</h3>
-                                    <p className="text-gray-500 text-sm">내 냉장고와 비교해볼게요.</p>
-                                </div>
-                                <button
-                                    onClick={() => setShowIngredientModal(false)}
-                                    className="p-2 bg-gray-100 rounded-full hover:bg-gray-200 transition-colors"
-                                >
-                                    <X size={20} />
-                                </button>
-                            </div>
+                          {hasIngredient ? <CheckCircle2 size={18} /> : <AlertCircle size={18} />}
+                        </div>
+                        <div>
+                          <p className="font-semibold text-slate-900">{ingredient.name}</p>
+                          <p className="text-xs text-slate-500">{ingredient.amount}</p>
+                        </div>
+                      </div>
+                      <span
+                        className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                          hasIngredient ? 'bg-white text-emerald-700' : 'bg-white text-amber-700'
+                        }`}
+                      >
+                        {hasIngredient ? '보유 중' : '추가 필요'}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
 
-                            <div className="space-y-3 max-h-[50vh] overflow-y-auto pr-1">
-                                {selectedShort.ingredients.map((ing, idx) => {
-                                    const hasIngredient = checkIngredientAvailability(ing.name);
-                                    return (
-                                        <div
-                                            key={idx}
-                                            className={`flex items-center justify-between p-3 rounded-2xl border ${hasIngredient ? 'bg-green-50 border-green-200' : 'bg-orange-50 border-orange-200'}`}
-                                        >
-                                            <div className="flex items-center gap-3">
-                                                <div className={`w-10 h-10 rounded-full flex items-center justify-center text-lg ${hasIngredient ? 'bg-green-100' : 'bg-orange-100'}`}>
-                                                    {hasIngredient ? 'O' : '!'}
-                                                </div>
-                                                <div>
-                                                    <p className={`font-bold ${hasIngredient ? 'text-green-900' : 'text-gray-800'}`}>
-                                                        {ing.name}
-                                                    </p>
-                                                    <p className="text-xs text-gray-500">{ing.amount}</p>
-                                                </div>
-                                            </div>
-                                            <div className="text-right">
-                                                {hasIngredient ? (
-                                                    <span className="text-xs font-bold text-green-600 bg-green-100 px-2 py-1 rounded-full">보유 중</span>
-                                                ) : (
-                                                    <span className="text-xs font-bold text-orange-600 bg-orange-100 px-2 py-1 rounded-full">추가 필요</span>
-                                                )}
-                                            </div>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-
-                            <button
-                                onClick={() => setShowIngredientModal(false)}
-                                className="w-full mt-6 bg-gray-900 text-white font-bold py-4 rounded-2xl shadow-lg hover:scale-[1.02] transition-transform"
-                            >
-                                확인 완료
-                            </button>
-                        </motion.div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
-        </div>
-    );
+              <button type="button" onClick={() => setSelectedShort(null)} className="btn-primary mt-6 w-full">
+                확인 완료
+              </button>
+            </motion.div>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
+    </div>
+  );
 };
 
 export default ShortsFeed;

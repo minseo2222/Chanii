@@ -1,179 +1,298 @@
-import { useEffect, useMemo, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Package, Sparkles } from 'lucide-react';
+import { useDeferredValue, useEffect, useMemo, useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { CheckSquare, MoveHorizontal, Package, Plus, Search, Sparkles, Square } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
-import IngredientCard from '../components/IngredientCard';
 import AddIngredientForm from '../components/AddIngredientForm';
+import IngredientCard from '../components/IngredientCard';
 import IngredientDetailModal from '../components/IngredientDetailModal';
-
-const tabs = [
-    { id: 'refrigerated', label: '냉장', icon: '🧊', emptyText: '냉장 칸이 비어 있어요.' },
-    { id: 'frozen', label: '냉동', icon: '❄️', emptyText: '냉동 칸이 비어 있어요.' },
-    { id: 'room', label: '실온', icon: '🥫', emptyText: '실온 보관 재료가 없어요.' }
-];
+import { calculateFreshness } from '../data/mockInventory';
+import { storageMeta, storageTabs } from '../lib/inventoryMeta';
 
 const Inventory = ({ inventory, onAddIngredient, onUpdateIngredient, onDeleteIngredient, onToggleFreeze }) => {
-    const location = useLocation();
-    const [activeTab, setActiveTab] = useState('refrigerated');
-    const [showAddForm, setShowAddForm] = useState(false);
-    const [selectedIngredient, setSelectedIngredient] = useState(null);
+  const location = useLocation();
+  const [activeTab, setActiveTab] = useState('refrigerated');
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [selectedIngredient, setSelectedIngredient] = useState(null);
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const deferredSearchTerm = useDeferredValue(searchTerm);
 
-    useEffect(() => {
-        const requestedTab = location.state?.initialTab;
-        if (requestedTab && tabs.some((tab) => tab.id === requestedTab)) {
-            setActiveTab(requestedTab);
-        }
-    }, [location.state]);
+  useEffect(() => {
+    const requestedTab = location.state?.initialTab;
+    if (requestedTab && storageTabs.some((tab) => tab.id === requestedTab)) {
+      setActiveTab(requestedTab);
+    }
+  }, [location.state]);
 
-    const filteredItems = useMemo(
-        () => inventory.filter((item) => item.location === activeTab),
-        [inventory, activeTab]
+  useEffect(() => {
+    setSelectedIds([]);
+    setSelectionMode(false);
+  }, [activeTab]);
+
+  const tabItems = useMemo(() => inventory.filter((item) => item.location === activeTab), [inventory, activeTab]);
+
+  const visibleItems = useMemo(() => {
+    const normalizedTerm = deferredSearchTerm.trim().toLowerCase();
+    if (!normalizedTerm) return tabItems;
+
+    return tabItems.filter((item) =>
+      [item.name, item.quantity, item.processingState]
+        .filter(Boolean)
+        .some((value) => String(value).toLowerCase().includes(normalizedTerm))
     );
+  }, [deferredSearchTerm, tabItems]);
 
-    const activeTabInfo = tabs.find((tab) => tab.id === activeTab);
+  const activeStorage = storageMeta[activeTab] || storageMeta.refrigerated;
+  const selectable = activeTab !== 'room';
+  const transferLabel = activeTab === 'refrigerated' ? '냉동 보관으로 이동' : '냉장 보관으로 이동';
 
-    return (
-        <div className="min-h-screen p-6 pb-24">
-            <div className="max-w-6xl mx-auto space-y-6">
-                <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
-                    <div>
-                        <p className="text-sm font-semibold text-pastel-purple mb-2">찬이 인벤토리</p>
-                        <h1 className="text-4xl font-bold bg-gradient-to-r from-pastel-purple to-pastel-blue bg-clip-text text-transparent">
-                            인벤토리
-                        </h1>
-                        <p className="text-gray-500 mt-2">
-                            보관 위치별로 재료를 관리하고, 눌러서 바로 상태를 수정할 수 있어요.
-                        </p>
-                    </div>
+  const summary = useMemo(() => {
+    const expiringSoon = tabItems.filter((item) => {
+      const freshness = calculateFreshness(item.expiryDate);
+      return freshness.status === 'danger' || freshness.status === 'expired';
+    }).length;
 
-                    <motion.button
-                        onClick={() => setShowAddForm(true)}
-                        className="btn-primary flex items-center gap-2 self-start md:self-auto"
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                    >
-                        <Plus size={20} />
-                        재료 추가
-                    </motion.button>
-                </div>
+    return {
+      total: tabItems.length,
+      expiringSoon,
+      selected: selectedIds.length
+    };
+  }, [selectedIds.length, tabItems]);
 
-                <div className="grid grid-cols-1 lg:grid-cols-[1.2fr_0.8fr] gap-4">
-                    <div className="flex gap-4 bg-white/40 backdrop-blur-sm rounded-3xl p-3 overflow-x-auto">
-                        {tabs.map((tab) => (
-                            <motion.button
-                                key={tab.id}
-                                onClick={() => setActiveTab(tab.id)}
-                                className={`flex-1 min-w-[120px] tab ${activeTab === tab.id ? 'tab-active shadow-lg' : 'tab-inactive'}`}
-                                whileHover={{ scale: 1.02 }}
-                                whileTap={{ scale: 0.98 }}
-                            >
-                                <span className="mr-2">{tab.icon}</span>
-                                {tab.label}
-                            </motion.button>
-                        ))}
-                    </div>
+  const toggleSelected = (id) => {
+    setSelectedIds((prev) => (prev.includes(id) ? prev.filter((itemId) => itemId !== id) : [...prev, id]));
+  };
 
-                    <div className="rounded-3xl bg-white/70 backdrop-blur-md border border-white/80 p-4 shadow-lg">
-                        <div className="flex items-center gap-3">
-                            <div className="w-11 h-11 rounded-2xl bg-pastel-purple/15 text-pastel-purple flex items-center justify-center">
-                                <Sparkles size={20} />
-                            </div>
-                            <div>
-                                <p className="text-sm text-gray-500">현재 선택</p>
-                                <p className="font-bold text-gray-800">{activeTabInfo?.label} 보관</p>
-                            </div>
-                        </div>
-                        <p className="text-sm text-gray-600 mt-3">
-                            이 구역에 재료가 <span className="font-bold text-gray-800">{filteredItems.length}개</span> 있어요.
-                        </p>
-                    </div>
-                </div>
+  const handleCardClick = (item) => {
+    if (selectionMode) {
+      toggleSelected(item.id);
+      return;
+    }
 
-                <AnimatePresence mode="wait">
-                    <motion.div
-                        key={activeTab}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -20 }}
-                        transition={{ duration: 0.3 }}
-                    >
-                        {filteredItems.length === 0 ? (
-                            <motion.div
-                                className="card text-center py-16"
-                                initial={{ scale: 0.9 }}
-                                animate={{ scale: 1 }}
-                            >
-                                <Package className="mx-auto mb-4 text-gray-400" size={64} />
-                                <h3 className="text-xl font-bold text-gray-600 mb-2">
-                                    비어 있어요
-                                </h3>
-                                <p className="text-gray-500">
-                                    {activeTabInfo?.emptyText}
-                                </p>
-                                <motion.button
-                                    onClick={() => setShowAddForm(true)}
-                                    className="btn-primary mt-4 inline-flex items-center gap-2"
-                                    whileHover={{ scale: 1.05 }}
-                                    whileTap={{ scale: 0.95 }}
-                                >
-                                    <Plus size={20} />
-                                    식재료 추가하기
-                                </motion.button>
-                            </motion.div>
-                        ) : (
-                            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                                {filteredItems.map((item, index) => (
-                                    <motion.div
-                                        key={item.id}
-                                        initial={{ opacity: 0, scale: 0.9 }}
-                                        animate={{ opacity: 1, scale: 1 }}
-                                        transition={{ delay: index * 0.04 }}
-                                        onClick={() => setSelectedIngredient(item)}
-                                        className="cursor-pointer"
-                                    >
-                                        <IngredientCard ingredient={item} />
-                                    </motion.div>
-                                ))}
-                            </div>
-                        )}
-                    </motion.div>
-                </AnimatePresence>
+    setSelectedIngredient(item);
+  };
 
-                <motion.div
-                    className="mt-2 bg-white/65 backdrop-blur-sm rounded-2xl p-6 border border-white/70"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.2 }}
+  const handleMoveSelected = async () => {
+    await Promise.all(selectedIds.map((id) => onToggleFreeze?.(id)));
+    setSelectedIds([]);
+    setSelectionMode(false);
+  };
+
+  return (
+    <div className="page-shell pb-24">
+      <div className="layout-container space-y-6">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div className="space-y-2">
+            <p className="text-sm font-semibold text-slate-500">Inventory Control</p>
+            <h1 className="text-4xl font-bold text-slate-900">인벤토리</h1>
+            <p className="max-w-2xl text-slate-500">
+              자주 쓰는 재료를 빠르게 찾고, 냉장·냉동·실온 흐름을 한 번에 관리할 수 있게 정리했어요.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap gap-3">
+            {selectable ? (
+              <motion.button
+                type="button"
+                onClick={() => {
+                  setSelectionMode((prev) => !prev);
+                  setSelectedIds([]);
+                }}
+                className={`inline-flex items-center gap-2 rounded-full border px-5 py-3 font-semibold transition-colors ${
+                  selectionMode ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-200 bg-white text-slate-700'
+                }`}
+                whileHover={{ scale: 1.01 }}
+                whileTap={{ scale: 0.99 }}
+              >
+                {selectionMode ? <CheckSquare size={18} /> : <Square size={18} />}
+                {selectionMode ? '선택 종료' : '다중 선택'}
+              </motion.button>
+            ) : null}
+
+            <motion.button
+              type="button"
+              onClick={() => setShowAddForm(true)}
+              className="btn-primary flex items-center gap-2"
+              whileHover={{ scale: 1.01 }}
+              whileTap={{ scale: 0.99 }}
+            >
+              <Plus size={18} />
+              재료 추가
+            </motion.button>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1.35fr_0.65fr]">
+          <div className="section-card p-3">
+            <div className="flex gap-3 overflow-x-auto pb-1">
+              {storageTabs.map((tab) => (
+                <motion.button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`tab min-w-[132px] ${activeTab === tab.id ? 'tab-active shadow-sm' : 'tab-inactive'}`}
+                  whileHover={{ scale: 1.01 }}
+                  whileTap={{ scale: 0.99 }}
                 >
-                    <h3 className="font-bold text-lg mb-2">빠른 사용 팁</h3>
-                    <ul className="space-y-2 text-sm text-gray-700">
-                        <li>재료 카드를 누르면 수량, 유통기한, 보관 위치를 바로 수정할 수 있어요.</li>
-                        <li>냉장과 냉동 재료는 상세 창에서 한 번에 서로 이동시킬 수 있어요.</li>
-                        <li>유통기한이 가까운 재료부터 먼저 요리에 사용하면 낭비를 줄일 수 있어요.</li>
-                    </ul>
-                </motion.div>
+                  <span className="mr-2">{tab.icon}</span>
+                  {tab.label}
+                </motion.button>
+              ))}
+            </div>
+          </div>
+
+          <div className="section-card flex items-center gap-4 p-5">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-700">
+              <Sparkles size={20} />
+            </div>
+            <div>
+              <p className="text-sm text-slate-500">현재 구역</p>
+              <p className="font-bold text-slate-900">{activeStorage.fullLabel}</p>
+              <p className="mt-1 text-sm text-slate-500">{activeStorage.helperText}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+          <div className="metric-card">
+            <p className="text-sm text-slate-500">현재 구역 재고</p>
+            <p className="mt-2 text-3xl font-bold text-slate-900">{summary.total}</p>
+            <p className="mt-2 text-sm text-slate-500">선택한 보관 칸 기준 수량이에요.</p>
+          </div>
+          <div className="metric-card">
+            <p className="text-sm text-slate-500">유통기한 임박</p>
+            <p className="mt-2 text-3xl font-bold text-slate-900">{summary.expiringSoon}</p>
+            <p className="mt-2 text-sm text-slate-500">오늘 먼저 써야 하는 재료 수예요.</p>
+          </div>
+          <div className="metric-card">
+            <p className="text-sm text-slate-500">다중 선택</p>
+            <p className="mt-2 text-3xl font-bold text-slate-900">{summary.selected}</p>
+            <p className="mt-2 text-sm text-slate-500">선택 모드에서 한 번에 이동할 수 있어요.</p>
+          </div>
+        </div>
+
+        <div className="section-card p-5">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <h2 className="text-lg font-bold text-slate-900">빠른 탐색</h2>
+              <p className="mt-1 text-sm text-slate-500">재료명, 수량, 상태로 바로 찾을 수 있어요.</p>
             </div>
 
-            {showAddForm && (
-                <AddIngredientForm
-                    onAdd={onAddIngredient}
-                    onClose={() => setShowAddForm(false)}
-                />
-            )}
-
-            <AnimatePresence>
-                {selectedIngredient && (
-                    <IngredientDetailModal
-                        ingredient={selectedIngredient}
-                        onClose={() => setSelectedIngredient(null)}
-                        onUpdate={onUpdateIngredient}
-                        onDelete={onDeleteIngredient}
-                        onToggleFreeze={onToggleFreeze}
-                    />
-                )}
-            </AnimatePresence>
+            <div className="relative w-full lg:max-w-md">
+              <Search className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(event) => setSearchTerm(event.target.value)}
+                placeholder="예: 김치, 300g, 반찬"
+                className="input-shell pl-11"
+              />
+            </div>
+          </div>
         </div>
-    );
+
+        {selectionMode && selectable ? (
+          <div className="rounded-[2rem] bg-slate-900 p-4 text-white shadow-sm">
+            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+              <div>
+                <p className="font-bold">선택한 재료 {selectedIds.length}개</p>
+                <p className="mt-1 text-sm text-slate-300">한 번에 옮겨서 재고 정리를 빠르게 끝낼 수 있어요.</p>
+              </div>
+              <motion.button
+                type="button"
+                onClick={handleMoveSelected}
+                disabled={selectedIds.length === 0}
+                className="inline-flex items-center justify-center gap-2 rounded-full bg-white px-5 py-3 font-semibold text-slate-900 disabled:opacity-40"
+                whileHover={{ scale: selectedIds.length > 0 ? 1.01 : 1 }}
+                whileTap={{ scale: selectedIds.length > 0 ? 0.99 : 1 }}
+              >
+                <MoveHorizontal size={18} />
+                {transferLabel}
+              </motion.button>
+            </div>
+          </div>
+        ) : null}
+
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={`${activeTab}-${selectionMode}-${deferredSearchTerm}`}
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -16 }}
+          >
+            {visibleItems.length === 0 ? (
+              <div className="section-card flex flex-col items-center px-6 py-16 text-center">
+                <Package className="mb-4 text-slate-300" size={56} />
+                <h3 className="text-xl font-bold text-slate-800">
+                  {searchTerm.trim() ? '검색 결과가 없어요' : activeStorage.emptyTitle}
+                </h3>
+                <p className="mt-2 max-w-md text-slate-500">
+                  {searchTerm.trim()
+                    ? '검색어를 바꾸거나 다른 보관 구역으로 이동해 보세요.'
+                    : activeStorage.emptyDescription}
+                </p>
+                <div className="mt-5 flex flex-wrap justify-center gap-3">
+                  {searchTerm.trim() ? (
+                    <button type="button" onClick={() => setSearchTerm('')} className="btn-secondary">
+                      검색 초기화
+                    </button>
+                  ) : null}
+                  <button type="button" onClick={() => setShowAddForm(true)} className="btn-primary">
+                    재료 추가하기
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+                {visibleItems.map((item, index) => (
+                  <motion.div
+                    key={item.id}
+                    initial={{ opacity: 0, scale: 0.98 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: index * 0.03 }}
+                    onClick={() => handleCardClick(item)}
+                    className="cursor-pointer"
+                  >
+                    <IngredientCard ingredient={item} selectionMode={selectionMode} selected={selectedIds.includes(item.id)} />
+                  </motion.div>
+                ))}
+              </div>
+            )}
+          </motion.div>
+        </AnimatePresence>
+
+        <div className="section-card p-6">
+          <h3 className="text-lg font-bold text-slate-900">운영 팁</h3>
+          <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-3">
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+              냉장과 냉동만 다중 이동이 가능해서 정리 작업이 빨라져요.
+            </div>
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+              유통기한 임박 재료를 먼저 등록하면 메인 추천과 알림 품질이 좋아져요.
+            </div>
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+              재료 카드를 눌러 수량, 날짜, 위치를 바로 수정할 수 있어요.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {showAddForm ? <AddIngredientForm onAdd={onAddIngredient} onClose={() => setShowAddForm(false)} /> : null}
+
+      <AnimatePresence>
+        {selectedIngredient && !selectionMode ? (
+          <IngredientDetailModal
+            ingredient={selectedIngredient}
+            onClose={() => setSelectedIngredient(null)}
+            onUpdate={onUpdateIngredient}
+            onDelete={onDeleteIngredient}
+            onToggleFreeze={onToggleFreeze}
+          />
+        ) : null}
+      </AnimatePresence>
+    </div>
+  );
 };
 
 export default Inventory;

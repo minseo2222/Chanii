@@ -39,6 +39,20 @@ export const api = {
       method: 'POST',
       body: JSON.stringify(entry)
     }),
+  addShoppingListItems: (items) =>
+    request('/api/shopping-list', {
+      method: 'POST',
+      body: JSON.stringify({ items })
+    }),
+  updateShoppingListItem: (id, updates) =>
+    request(`/api/shopping-list/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(updates)
+    }),
+  deleteShoppingListItem: (id) =>
+    request(`/api/shopping-list/${id}`, {
+      method: 'DELETE'
+    }),
   getRecommendations: (inventorySnapshot) =>
     request('/api/ai/recommendations', {
       method: 'POST',

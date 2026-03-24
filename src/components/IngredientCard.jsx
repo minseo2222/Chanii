@@ -1,114 +1,106 @@
 import { motion } from 'framer-motion';
-import { Beef, Salad, Egg, Cookie, Apple, Milk, Fish, Square, Snowflake, Carrot } from 'lucide-react';
+import { Apple, Beef, Carrot, Check, Cookie, Egg, Fish, Milk, Salad, Snowflake, Square } from 'lucide-react';
 import { calculateFreshness } from '../data/mockInventory';
+import {
+  formatFreshnessCountdown,
+  formatFreshnessStatus,
+  getProcessingLabel,
+  getStorageLabel,
+  processingMeta,
+  storageMeta
+} from '../lib/inventoryMeta';
 
 const iconMap = {
-    beef: Beef,
-    salad: Salad,
-    egg: Egg,
-    cookie: Cookie,
-    apple: Apple,
-    carrot: Carrot,
-    milk: Milk,
-    fish: Fish,
-    square: Square
+  beef: Beef,
+  salad: Salad,
+  egg: Egg,
+  cookie: Cookie,
+  apple: Apple,
+  carrot: Carrot,
+  milk: Milk,
+  fish: Fish,
+  square: Square
 };
 
-const IngredientCard = ({ ingredient }) => {
-    const freshness = calculateFreshness(ingredient.expiryDate);
-    const Icon = iconMap[ingredient.icon] || Square;
+const freshnessColorMap = {
+  good: '#22c55e',
+  warning: '#f59e0b',
+  danger: '#ef4444',
+  expired: '#dc2626'
+};
 
-    const locationColors = {
-        refrigerated: 'bg-blue-100 text-blue-700',
-        frozen: 'bg-cyan-200 text-cyan-800',
-        room: 'bg-amber-100 text-amber-700'
-    };
+const IngredientCard = ({ ingredient, selected = false, selectionMode = false }) => {
+  const freshness = calculateFreshness(ingredient.expiryDate);
+  const Icon = iconMap[ingredient.icon] || Square;
+  const storage = storageMeta[ingredient.location] || storageMeta.refrigerated;
+  const processing = processingMeta[ingredient.processingState] || processingMeta.생재료;
 
-    const locationLabels = {
-        refrigerated: '냉장',
-        frozen: '냉동',
-        room: '실온'
-    };
+  return (
+    <motion.article
+      layout
+      className={`card relative cursor-pointer border ${
+        selected ? 'border-slate-900 ring-2 ring-slate-200' : 'border-slate-200'
+      }`}
+      whileHover={{ y: -2 }}
+      whileTap={{ scale: 0.99 }}
+    >
+      {ingredient.location === 'frozen' ? (
+        <div className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-2xl bg-cyan-500 text-white shadow-sm">
+          <Snowflake size={16} />
+        </div>
+      ) : null}
 
-    const processingColors = {
-        원물: 'bg-green-100 text-green-700',
-        소분: 'bg-purple-100 text-purple-700',
-        손질: 'bg-pink-100 text-pink-700',
-        완제품: 'bg-gray-100 text-gray-700'
-    };
-
-    const freshnessLabel =
-        freshness.status === 'expired'
-            ? '유통기한 지남'
-            : freshness.status === 'danger'
-              ? '곧 만료'
-              : freshness.status === 'warning'
-                ? '주의'
-                : '신선';
-
-    return (
-        <motion.div
-            className="card relative cursor-pointer"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.98 }}
-            layout
+      {selectionMode ? (
+        <div
+          className={`absolute left-4 top-4 flex h-6 w-6 items-center justify-center rounded-full border ${
+            selected ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-300 bg-white text-transparent'
+          }`}
         >
-            {ingredient.location === 'frozen' && (
-                <motion.div
-                    className="absolute -top-2 -right-2 bg-cyan-400 rounded-full p-2 shadow-lg"
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
-                >
-                    <Snowflake className="text-white" size={20} />
-                </motion.div>
-            )}
+          <Check size={14} />
+        </div>
+      ) : null}
 
-            <div className="flex items-start gap-3">
-                <div className="bg-gradient-to-br from-pastel-pink to-pastel-purple p-3 rounded-xl">
-                    <Icon className="text-white" size={32} />
-                </div>
+      <div className="flex items-start gap-4">
+        <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-2xl bg-slate-100 text-slate-700">
+          <Icon size={26} />
+        </div>
 
-                <div className="flex-1 min-w-0">
-                    <h3 className="font-bold text-lg truncate">{ingredient.name}</h3>
-                    <p className="text-sm text-gray-600">{ingredient.quantity}</p>
-
-                    <div className="flex gap-2 mt-2 flex-wrap">
-                        <span className={`badge ${locationColors[ingredient.location]}`}>
-                            {locationLabels[ingredient.location]}
-                        </span>
-                        <span className={`badge ${processingColors[ingredient.processingState] || processingColors.원물}`}>
-                            {ingredient.processingState}
-                        </span>
-                    </div>
-                </div>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <h3 className="truncate text-lg font-bold text-slate-900">{ingredient.name}</h3>
+              <p className="mt-1 text-sm text-slate-500">{ingredient.quantity}</p>
             </div>
+          </div>
 
-            <div className="mt-3 space-y-1">
-                <div className="flex justify-between text-xs">
-                    <span className="font-semibold">{freshnessLabel}</span>
-                    <span className="text-gray-600">
-                        {freshness.days > 0 ? `${freshness.days}일 남음` : '기한 만료'}
-                    </span>
-                </div>
-                <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
-                    <motion.div
-                        className="freshness-bar"
-                        initial={{ width: 0 }}
-                        animate={{ width: `${freshness.percentage}%` }}
-                        transition={{ duration: 0.5 }}
-                        style={{
-                            backgroundColor:
-                                freshness.status === 'good'
-                                    ? '#4ADE80'
-                                    : freshness.status === 'warning'
-                                      ? '#FBBF24'
-                                      : '#EF4444'
-                        }}
-                    />
-                </div>
-            </div>
-        </motion.div>
-    );
+          <div className="mt-3 flex flex-wrap gap-2">
+            <span className={`badge border ${storage.accentClass}`}>{getStorageLabel(ingredient.location)}</span>
+            <span className={`badge border ${processing.className}`}>{getProcessingLabel(ingredient.processingState)}</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-5 rounded-2xl border border-slate-100 bg-slate-50 p-3">
+        <div className="mb-2 flex items-center justify-between gap-3 text-xs">
+          <span className="font-semibold text-slate-700">{formatFreshnessStatus(freshness)}</span>
+          <span className="text-slate-500">{formatFreshnessCountdown(freshness)}</span>
+        </div>
+        <div className="h-2 overflow-hidden rounded-full bg-white">
+          <motion.div
+            className="h-full rounded-full"
+            initial={{ width: 0 }}
+            animate={{ width: `${freshness.percentage}%` }}
+            transition={{ duration: 0.4 }}
+            style={{ backgroundColor: freshnessColorMap[freshness.status] || freshnessColorMap.good }}
+          />
+        </div>
+        <div className="mt-2 flex items-center justify-between text-xs text-slate-500">
+          <span>{ingredient.expiryDate}</span>
+          <span>{storage.helperText}</span>
+        </div>
+      </div>
+    </motion.article>
+  );
 };
 
 export default IngredientCard;
